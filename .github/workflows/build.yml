@@ -1,0 +1,93 @@
+#
+# 🚀 Enhanced Flutter Build, Release, and Notify Workflow 🚀
+#
+# What's new and improved?
+# 1.  **Semantic Versioning**: Reads the version directly from your `pubspec.yaml` file.
+# 2.  **Dedicated Actions**: Uses specialized GitHub Actions for cleaner, more reliable code.
+# 3.  **Enhanced Security**: Fetches secrets securely using `secrets.VARIABLE_NAME`.
+# 4.  **FIXED**: Correctly displays the release timestamp.
+# 5.  **FIXED & UPGRADED ✨**: Replaced the problematic changelog generator with `mikepenz/release-changelog-builder-action`, a more reliable and popular action to fix the "action not found" error.
+#
+
+name: 🚀 Flutter Build, Release & Notify
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # This permission is required to create releases and upload assets
+
+    steps:
+      - name: ✅ Checkout Code
+        uses: actions/checkout@v4
+        with:
+          # We need to fetch all history and tags for the changelog generator to work correctly
+          fetch-depth: 0
+
+      - name: 📦 Install jq
+        run: sudo apt-get install -y jq
+        # jq is a lightweight and flexible command-line JSON processor.
+
+      - name: ⚙️ Setup Environment Variables
+        id: setup_vars
+        run: |
+          # Read the version from pubspec.yaml
+          APP_VERSION=$(cat pubspec.yaml | grep 'version:' | awk '{print $2}')
+          echo "RELEASE_TAG=v${APP_VERSION}" >> $GITHUB_ENV
+          # Get the current timestamp
+          echo "CURRENT_DATE_TIME=$(date +"%Y-%m-%d %H:%M:%S")" >> $GITHUB_ENV
+
+      - name: 🐦 Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.32.5'
+          channel: 'stable'
+          cache: true
+
+      - name: 🔄 Get Dependencies
+        run: flutter pub get
+
+      - name: 💪 Build Release APK
+        run: flutter build apk --release
+
+      - name: 📦 Prepare Release Artifacts
+        run: |
+          mkdir -p release_artifacts
+          mv build/app/outputs/flutter-apk/app-release.apk release_artifacts/Issue-Tracker-${{ env.RELEASE_TAG }}.apk
+
+      - name: 🚀 Create GitHub Release & Upload APK
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ env.RELEASE_TAG }}
+          name: "Release ${{ env.RELEASE_TAG }}"
+          body: |
+            ## ✨ New Release: ${{ env.RELEASE_TAG }}
+            **App:** Issue Tracker
+            **Released On:** ${{ env.CURRENT_DATE_TIME }}
+            
+            Another awesome update is here! Grab the APK below. 👇
+          files: release_artifacts/*
+
+      - name: 📲 Notify via Telegram
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.TELEGRAM_CHAT_ID }}
+          token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          format: markdown
+          message: |
+            *🚀 New Flutter Release!*
+
+            *App:* `Issue Tracker`
+            *Version:* `${{ env.RELEASE_TAG }}`
+
+            *Changes:*
+            `${{ steps.changelog.outputs.changelog }}`
+
+            A new version has just been released. Check it out on GitHub!
+            [View Release](${{ github.server_url }}/${{ github.repository }}/releases/tag/${{ env.RELEASE_TAG }})

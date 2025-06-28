@@ -4,7 +4,7 @@ import '../models/attendance_record.dart';
 import '../models/attendance_status.dart';
 import '../utils/app_colors.dart';
 
-class AttendanceSummaryCard extends StatelessWidget {
+class AttendanceSummaryCard extends StatefulWidget {
   final AttendanceRecord? record;
   final VoidCallback? onRefresh;
 
@@ -15,68 +15,199 @@ class AttendanceSummaryCard extends StatelessWidget {
   });
 
   @override
+  State<AttendanceSummaryCard> createState() => _AttendanceSummaryCardState();
+}
+
+class _AttendanceSummaryCardState extends State<AttendanceSummaryCard>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _animationController;
+  late Animation<double> _fadeAnimation;
+  late Animation<Offset> _slideAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _animationController = AnimationController(
+      duration: const Duration(milliseconds: 800),
+      vsync: this,
+    );
+    
+    _fadeAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(
+      parent: _animationController,
+      curve: const Interval(0.0, 0.6, curve: Curves.easeOut),
+    ));
+    
+    _slideAnimation = Tween<Offset>(
+      begin: const Offset(0, 0.3),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(
+      parent: _animationController,
+      curve: const Interval(0.2, 1.0, curve: Curves.easeOutCubic),
+    ));
+    
+    _animationController.forward();
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Today\'s Attendance',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.textPrimary,
+    return AnimatedBuilder(
+      animation: _animationController,
+      builder: (context, child) {
+        return FadeTransition(
+          opacity: _fadeAnimation,
+          child: SlideTransition(
+            position: _slideAnimation,
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: AppColors.cardGradient,
+                borderRadius: BorderRadius.circular(24),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.shadowLight,
+                    blurRadius: 20,
+                    offset: const Offset(0, 8),
+                    spreadRadius: 0,
+                  ),
+                  BoxShadow(
+                    color: AppColors.shadowMedium,
+                    blurRadius: 40,
+                    offset: const Offset(0, 16),
+                    spreadRadius: -8,
+                  ),
+                ],
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(24),
+                child: Container(
+                  decoration: BoxDecoration(
+                    border: Border.all(
+                      color: AppColors.glassMorphismBorder,
+                      width: 1,
+                    ),
+                    borderRadius: BorderRadius.circular(24),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildHeader(),
+                        const SizedBox(height: 20),
+                        
+                        if (widget.record == null) ...[
+                          _buildEmptyState(),
+                        ] else ...[
+                          _buildAttendanceDetails(),
+                        ],
+                      ],
+                    ),
                   ),
                 ),
-                if (onRefresh != null)
-                  IconButton(
-                    icon: const Icon(Icons.refresh),
-                    onPressed: onRefresh,
-                    iconSize: 20,
-                  ),
-              ],
+              ),
             ),
-            const SizedBox(height: 16),
-            
-            if (record == null) ...[
-              _buildEmptyState(),
-            ] else ...[
-              _buildAttendanceDetails(),
-            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildHeader() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                gradient: AppColors.primaryGradient,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(
+                Icons.today_rounded,
+                color: Colors.white,
+                size: 20,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Text(
+              'Today\'s Attendance',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w700,
+                color: AppColors.textPrimary,
+                letterSpacing: -0.5,
+              ),
+            ),
           ],
         ),
-      ),
+        if (widget.onRefresh != null)
+          Container(
+            decoration: BoxDecoration(
+              color: AppColors.surfaceLight,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: IconButton(
+              icon: const Icon(Icons.refresh_rounded),
+              onPressed: widget.onRefresh,
+              iconSize: 20,
+              color: AppColors.primary,
+              splashRadius: 20,
+            ),
+          ),
+      ],
     );
   }
 
   Widget _buildEmptyState() {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(32),
       decoration: BoxDecoration(
-        color: AppColors.surfaceLight,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.error.withOpacity(0.3)),
+        gradient: LinearGradient(
+          colors: [
+            AppColors.surfaceLight.withOpacity(0.5),
+            AppColors.surfaceLight.withOpacity(0.8),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: AppColors.error.withOpacity(0.2),
+          width: 1,
+        ),
       ),
       child: Column(
         children: [
-          Icon(
-            Icons.schedule,
-            size: 48,
-            color: AppColors.textSecondary,
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: AppColors.error.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Icon(
+              Icons.schedule_rounded,
+              size: 48,
+              color: AppColors.error.withOpacity(0.7),
+            ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
           Text(
             'No attendance record for today',
             style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w500,
-              color: AppColors.textSecondary,
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+              color: AppColors.textPrimary,
             ),
           ),
           const SizedBox(height: 8),
@@ -84,7 +215,8 @@ class AttendanceSummaryCard extends StatelessWidget {
             'Please punch in to start tracking your attendance',
             style: TextStyle(
               fontSize: 14,
-              color: AppColors.textLight,
+              color: AppColors.textSecondary,
+              height: 1.4,
             ),
             textAlign: TextAlign.center,
           ),
@@ -98,152 +230,211 @@ class AttendanceSummaryCard extends StatelessWidget {
     
     return Column(
       children: [
-        // Status indicator
+        // Status indicator with enhanced design
         Container(
           width: double.infinity,
-          padding: const EdgeInsets.all(12),
+          padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: _getStatusBackgroundColor(record!.status),
-            borderRadius: BorderRadius.circular(8),
+            gradient: LinearGradient(
+              colors: [
+                _getStatusBackgroundColor(widget.record!.status),
+                _getStatusBackgroundColor(widget.record!.status).withOpacity(0.7),
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: _getStatusColor(widget.record!.status).withOpacity(0.3),
+              width: 1,
+            ),
           ),
           child: Row(
             children: [
-              Icon(
-                _getStatusIcon(record!.status),
-                color: _getStatusColor(record!.status),
-                size: 20,
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: _getStatusColor(widget.record!.status).withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(
+                  _getStatusIcon(widget.record!.status),
+                  color: _getStatusColor(widget.record!.status),
+                  size: 20,
+                ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 12),
               Text(
-                record!.status.displayName,
+                widget.record!.status.displayName,
                 style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: _getStatusColor(record!.status),
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: _getStatusColor(widget.record!.status),
                 ),
               ),
             ],
           ),
         ),
         
-        const SizedBox(height: 16),
+        const SizedBox(height: 20),
         
-        // Time details
-        if (record!.status == AttendanceStatus.present) ...[
+        // Time details with enhanced design
+        if (widget.record!.status == AttendanceStatus.present) ...[
           Row(
             children: [
               Expanded(
                 child: _buildTimeInfo(
                   'Punch In',
-                  record!.punchInTime != null 
-                      ? timeFormatter.format(record!.punchInTime!)
+                  widget.record!.punchInTime != null 
+                      ? timeFormatter.format(widget.record!.punchInTime!)
                       : 'Not punched in',
-                  Icons.login,
-                  record!.punchInTime != null ? AppColors.success : AppColors.textLight,
+                  Icons.login_rounded,
+                  widget.record!.punchInTime != null ? AppColors.success : AppColors.textLight,
                 ),
               ),
               const SizedBox(width: 16),
               Expanded(
                 child: _buildTimeInfo(
                   'Punch Out',
-                  record!.punchOutTime != null 
-                      ? timeFormatter.format(record!.punchOutTime!)
+                  widget.record!.punchOutTime != null 
+                      ? timeFormatter.format(widget.record!.punchOutTime!)
                       : 'Not punched out',
-                  Icons.logout,
-                  record!.punchOutTime != null ? AppColors.error : AppColors.textLight,
+                  Icons.logout_rounded,
+                  widget.record!.punchOutTime != null ? AppColors.error : AppColors.textLight,
                 ),
               ),
             ],
           ),
           
-          const SizedBox(height: 16),
+          const SizedBox(height: 20),
           
-          // Working hours
-          if (record!.workingHours > 0) ...[
+          // Working hours with enhanced progress indicator
+          if (widget.record!.workingHours > 0) ...[
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: record!.isWorkingHoursComplete 
-                    ? AppColors.successLight 
-                    : AppColors.warningLight,
-                borderRadius: BorderRadius.circular(8),
+                gradient: LinearGradient(
+                  colors: widget.record!.isWorkingHoursComplete 
+                      ? [
+                          AppColors.successLight.withOpacity(0.8),
+                          AppColors.successLight.withOpacity(0.4),
+                        ]
+                      : [
+                          AppColors.warningLight.withOpacity(0.8),
+                          AppColors.warningLight.withOpacity(0.4),
+                        ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: widget.record!.isWorkingHoursComplete 
+                      ? AppColors.success.withOpacity(0.3)
+                      : AppColors.warning.withOpacity(0.3),
+                  width: 1,
+                ),
               ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              child: Column(
                 children: [
                   Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Icon(
-                        Icons.access_time,
-                        color: record!.isWorkingHoursComplete 
-                            ? AppColors.success 
-                            : AppColors.warning,
-                        size: 20,
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: widget.record!.isWorkingHoursComplete 
+                                  ? AppColors.success.withOpacity(0.2)
+                                  : AppColors.warning.withOpacity(0.2),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Icon(
+                              Icons.access_time_rounded,
+                              color: widget.record!.isWorkingHoursComplete 
+                                  ? AppColors.success 
+                                  : AppColors.warning,
+                              size: 20,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Text(
+                            'Working Hours',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: widget.record!.isWorkingHoursComplete 
+                                  ? AppColors.success 
+                                  : AppColors.warning,
+                            ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(width: 8),
                       Text(
-                        'Working Hours',
+                        widget.record!.formattedWorkingHours,
                         style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                          color: record!.isWorkingHoursComplete 
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                          color: widget.record!.isWorkingHoursComplete 
                               ? AppColors.success 
                               : AppColors.warning,
                         ),
                       ),
                     ],
                   ),
-                  Text(
-                    record!.formattedWorkingHours,
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: record!.isWorkingHoursComplete 
-                          ? AppColors.success 
-                          : AppColors.warning,
-                    ),
+                  
+                  const SizedBox(height: 16),
+                  
+                  // Enhanced progress bar
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Progress to 9 hours',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                          Text(
+                            '${(widget.record!.workingHours / 9 * 100).toStringAsFixed(0)}%',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.textPrimary,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Container(
+                        height: 8,
+                        decoration: BoxDecoration(
+                          color: AppColors.surfaceLight,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(4),
+                          child: LinearProgressIndicator(
+                            value: (widget.record!.workingHours / 9).clamp(0.0, 1.0),
+                            backgroundColor: Colors.transparent,
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              widget.record!.isWorkingHoursComplete 
+                                  ? AppColors.success 
+                                  : AppColors.warning,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
-            ),
-            
-            // Progress bar
-            const SizedBox(height: 12),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'Progress to 9 hours',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: AppColors.textSecondary,
-                      ),
-                    ),
-                    Text(
-                      '${(record!.workingHours / 9 * 100).toStringAsFixed(0)}%',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.textSecondary,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 4),
-                LinearProgressIndicator(
-                  value: (record!.workingHours / 9).clamp(0.0, 1.0),
-                  backgroundColor: AppColors.surfaceLight,
-                  valueColor: AlwaysStoppedAnimation<Color>(
-                    record!.isWorkingHoursComplete 
-                        ? AppColors.success 
-                        : AppColors.warning,
-                  ),
-                ),
-              ],
             ),
           ],
         ],
@@ -253,10 +444,21 @@ class AttendanceSummaryCard extends StatelessWidget {
 
   Widget _buildTimeInfo(String label, String time, IconData icon, Color color) {
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.surfaceLight,
-        borderRadius: BorderRadius.circular(8),
+        gradient: LinearGradient(
+          colors: [
+            AppColors.surfaceLight.withOpacity(0.8),
+            AppColors.surfaceLight.withOpacity(0.4),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: color.withOpacity(0.2),
+          width: 1,
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -264,22 +466,23 @@ class AttendanceSummaryCard extends StatelessWidget {
           Row(
             children: [
               Icon(icon, size: 16, color: color),
-              const SizedBox(width: 4),
+              const SizedBox(width: 6),
               Text(
                 label,
                 style: TextStyle(
                   fontSize: 12,
+                  fontWeight: FontWeight.w500,
                   color: AppColors.textSecondary,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 8),
           Text(
             time,
             style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
+              fontSize: 15,
+              fontWeight: FontWeight.w700,
               color: color,
             ),
           ),
@@ -317,13 +520,13 @@ class AttendanceSummaryCard extends StatelessWidget {
   IconData _getStatusIcon(AttendanceStatus status) {
     switch (status) {
       case AttendanceStatus.present:
-        return Icons.check_circle;
+        return Icons.check_circle_rounded;
       case AttendanceStatus.absent:
-        return Icons.cancel;
+        return Icons.cancel_rounded;
       case AttendanceStatus.leave:
-        return Icons.event_busy;
+        return Icons.event_busy_rounded;
       case AttendanceStatus.weekOff:
-        return Icons.weekend;
+        return Icons.weekend_rounded;
     }
   }
 }

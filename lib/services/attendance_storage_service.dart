@@ -20,6 +20,30 @@ class AttendanceStorageService {
     _prefs ??= await SharedPreferences.getInstance();
   }
 
+  // Check if the given date is today
+  bool _isToday(DateTime date) {
+    final now = DateTime.now();
+    return date.year == now.year && 
+           date.month == now.month && 
+           date.day == now.day;
+  }
+
+  // Check if the given date is in the past
+  bool _isPastDate(DateTime date) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final checkDate = DateTime(date.year, date.month, date.day);
+    return checkDate.isBefore(today);
+  }
+
+  // Validate date for punching operations
+  bool _validatePunchDate(DateTime date) {
+    if (_isPastDate(date)) {
+      return false; // Cannot punch for past dates
+    }
+    return true;
+  }
+
   // Save attendance record
   Future<bool> saveAttendanceRecord(AttendanceRecord record) async {
     await init();
@@ -93,13 +117,23 @@ class AttendanceStorageService {
     }
   }
 
-  // Punch in
+  // Punch in with date validation
   Future<bool> punchIn(DateTime date) async {
     try {
+      // Validate that the date is not in the past
+      if (!_validatePunchDate(date)) {
+        throw Exception('Cannot punch in for past dates. Please punch in for today only.');
+      }
+
+      // Only allow punching for today
+      if (!_isToday(date)) {
+        throw Exception('You can only punch in for today. Past date punching is not allowed.');
+      }
+
       final existingRecord = await getAttendanceRecord(date);
       
       if (existingRecord != null && existingRecord.isPunchedIn) {
-        return false; // Already punched in
+        throw Exception('You have already punched in for today.');
       }
       
       final record = AttendanceRecord(
@@ -111,21 +145,31 @@ class AttendanceStorageService {
       return await saveAttendanceRecord(record);
     } catch (e) {
       print('Error punching in: $e');
-      return false;
+      rethrow; // Re-throw to let the UI handle the specific error message
     }
   }
 
-  // Punch out
+  // Punch out with date validation
   Future<bool> punchOut(DateTime date) async {
     try {
+      // Validate that the date is not in the past
+      if (!_validatePunchDate(date)) {
+        throw Exception('Cannot punch out for past dates. Please punch out for today only.');
+      }
+
+      // Only allow punching for today
+      if (!_isToday(date)) {
+        throw Exception('You can only punch out for today. Past date punching is not allowed.');
+      }
+
       final existingRecord = await getAttendanceRecord(date);
       
       if (existingRecord == null || !existingRecord.isPunchedIn) {
-        return false; // Must punch in first
+        throw Exception('You must punch in first before punching out.');
       }
       
       if (existingRecord.isPunchedOut) {
-        return false; // Already punched out
+        throw Exception('You have already punched out for today.');
       }
       
       DateTime punchOutTime = DateTime.now();
@@ -178,11 +222,11 @@ class AttendanceStorageService {
       return await saveAttendanceRecord(finalRecord);
     } catch (e) {
       print('Error punching out: $e');
-      return false;
+      rethrow; // Re-throw to let the UI handle the specific error message
     }
   }
 
-  // Mark leave or week off
+  // Mark leave or week off (this can be done for past dates for administrative purposes)
   Future<bool> markLeaveOrWeekOff(DateTime date, AttendanceStatus status) async {
     try {
       if (status != AttendanceStatus.leave && status != AttendanceStatus.weekOff) {
@@ -221,6 +265,15 @@ class AttendanceStorageService {
       return false;
     }
   }
-}
 
+  // Get error message for past date validation
+  String getPastDateErrorMessage() {
+    return 'Past date punching is not allowed. You can only punch in/out for today.';
+  }
+
+  // Check if punching is allowed for the given date
+  bool isPunchingAllowed(DateTime date) {
+    return _isToday(date) && !_isPastDate(date);
+  }
+}
 

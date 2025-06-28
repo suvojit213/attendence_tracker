@@ -59,7 +59,7 @@ jobs:
       - name: 📦 Prepare Release Artifacts
         run: |
           mkdir -p release_artifacts
-          mv build/app/outputs/flutter-apk/app-release.apk release_artifacts/Issue-Tracker-${{ env.RELEASE_TAG }}.apk
+          mv build/app/outputs/flutter-apk/app-release.apk release_artifacts/Attendence-Tracker-${{ env.RELEASE_TAG }}.apk
 
       - name: 🚀 Create GitHub Release & Upload APK
         uses: softprops/action-gh-release@v2
@@ -68,7 +68,7 @@ jobs:
           name: "Release ${{ env.RELEASE_TAG }}"
           body: |
             ## ✨ New Release: ${{ env.RELEASE_TAG }}
-            **App:** Issue Tracker
+            **App:** Attendence Tracker
             **Released On:** ${{ env.CURRENT_DATE_TIME }}
             
             Another awesome update is here! Grab the APK below. 👇

@@ -132,7 +132,30 @@ class AttendanceStorageService {
         punchOutTime: DateTime.now(),
       );
       
-      return await saveAttendanceRecord(updatedRecord);
+      // Determine the effective date for the attendance record
+      // If punch-out is on the next day but within a reasonable overnight shift window (e.g., before 6 AM),
+      // consider it for the punch-in date.
+      DateTime effectiveDate = existingRecord.date;
+      if (updatedRecord.punchInTime != null && updatedRecord.punchOutTime != null) {
+        if (updatedRecord.punchOutTime!.isBefore(updatedRecord.punchInTime!)) {
+          // This means punch-out is on the next day
+          // Check if the punch-out is early morning (e.g., before 6 AM) of the next day
+          if (updatedRecord.punchOutTime!.hour < 6) {
+            effectiveDate = existingRecord.date; // Keep the original punch-in date
+          } else {
+            effectiveDate = updatedRecord.punchOutTime!; // Use the punch-out date
+          }
+        } else if (updatedRecord.punchOutTime!.day != existingRecord.date.day) {
+          // If punch-out is on a different day but not before punch-in (e.g., 3 PM to 3 PM next day)
+          // This case might need more specific handling based on shift definitions.
+          // For now, if it's a new day, use the punch-out date.
+          effectiveDate = updatedRecord.punchOutTime!;
+        }
+      }
+
+      final finalRecord = updatedRecord.copyWith(date: DateTime(effectiveDate.year, effectiveDate.month, effectiveDate.day));
+      
+      return await saveAttendanceRecord(finalRecord);
     } catch (e) {
       print('Error punching out: $e');
       return false;
@@ -148,6 +171,8 @@ class AttendanceStorageService {
       
       final record = AttendanceRecord(
         date: DateTime(date.year, date.month, date.day),
+        punchInTime: null,
+        punchOutTime: null,
         status: status,
       );
       
@@ -176,16 +201,6 @@ class AttendanceStorageService {
       return false;
     }
   }
-
-  // Clear all records (for testing/reset)
-  Future<bool> clearAllRecords() async {
-    await init();
-    try {
-      return await _prefs!.remove(_attendanceKey);
-    } catch (e) {
-      print('Error clearing all records: $e');
-      return false;
-    }
-  }
 }
+
 

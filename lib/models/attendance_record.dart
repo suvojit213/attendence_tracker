@@ -19,7 +19,12 @@ class AttendanceRecord {
   // Calculate working hours
   double get workingHours {
     if (punchInTime != null && punchOutTime != null) {
-      final duration = punchOutTime!.difference(punchInTime!);
+      // Adjust punchOutTime for overnight shifts
+      DateTime effectivePunchOutTime = punchOutTime!;
+      if (punchOutTime!.isBefore(punchInTime!)) {
+        effectivePunchOutTime = punchOutTime!.add(const Duration(days: 1));
+      }
+      final duration = effectivePunchOutTime.difference(punchInTime!);
       return duration.inMinutes / 60.0;
     }
     return 0.0;
@@ -98,18 +103,6 @@ class AttendanceRecord {
   @override
   String toString() {
     return 'AttendanceRecord(date: $date, punchIn: $punchInTime, punchOut: $punchOutTime, status: $status)';
-  }
-
-  @override
-  bool operator ==(Object other) {
-    if (identical(this, other)) return true;
-    return other is AttendanceRecord &&
-        other.dateKey == dateKey;
-  }
-
-  @override
-  int get hashCode {
-    return dateKey.hashCode;
   }
 }
 

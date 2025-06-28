@@ -22,6 +22,11 @@ class _CalendarScreenState extends State<CalendarScreen> {
   Map<String, AttendanceRecord> _attendanceRecords = {};
   bool _isLoading = false;
 
+  int _presentCount = 0;
+  int _absentCount = 0;
+  int _leaveCount = 0;
+  int _weekOffCount = 0;
+
   @override
   void initState() {
     super.initState();
@@ -41,8 +46,22 @@ class _CalendarScreenState extends State<CalendarScreen> {
       );
       
       final recordsMap = <String, AttendanceRecord>{};
+      _presentCount = 0;
+      _absentCount = 0;
+      _leaveCount = 0;
+      _weekOffCount = 0;
+
       for (final record in records) {
         recordsMap[record.dateKey] = record;
+        if (record.status == AttendanceStatus.present) {
+          _presentCount++;
+        } else if (record.status == AttendanceStatus.absent) {
+          _absentCount++;
+        } else if (record.status == AttendanceStatus.leave) {
+          _leaveCount++;
+        } else if (record.status == AttendanceStatus.weekOff) {
+          _weekOffCount++;
+        }
       }
       
       setState(() {
@@ -291,8 +310,47 @@ class _CalendarScreenState extends State<CalendarScreen> {
                     },
                   ),
                 ),
+                const SizedBox(height: 20),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                  child: Column(
+                    children: [
+                      _buildStatRow('Present', _presentCount, AppColors.success),
+                      _buildStatRow('Absent', _absentCount, AppColors.error),
+                      _buildStatRow('Leave', _leaveCount, AppColors.leave),
+                      _buildStatRow('Week Off', _weekOffCount, AppColors.weekOff),
+                    ],
+                  ),
+                ),
               ],
             ),
+    );
+  }
+
+  Widget _buildStatRow(String label, int count, Color color) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+              color: AppColors.textPrimary,
+            ),
+          ),
+          Text(
+            count.toString(),
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: color,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -302,4 +360,5 @@ extension DateTimeExtension on DateTime {
     return DateTime(year, month, day, 23, 59, 59, 999, 999);
   }
 }
+
 

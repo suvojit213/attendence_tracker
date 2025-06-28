@@ -230,6 +230,8 @@ class _HomeScreenState extends State<HomeScreen> {
                     // Quick Stats
                     if (_todayRecord != null) ...[
                       Card(
+                        elevation: 4,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                         child: Padding(
                           padding: const EdgeInsets.all(16),
                           child: Column(
@@ -250,6 +252,22 @@ class _HomeScreenState extends State<HomeScreen> {
                                 _getStatusColor(_todayRecord!.status),
                               ),
                               const SizedBox(height: 8),
+                              if (_todayRecord!.punchInTime != null) ...[
+                                _buildStatRow(
+                                  'Punch In Time',
+                                  DateFormat('h:mm a').format(_todayRecord!.punchInTime!),
+                                  AppColors.textPrimary,
+                                ),
+                                const SizedBox(height: 8),
+                              ],
+                              if (_todayRecord!.punchOutTime != null) ...[
+                                _buildStatRow(
+                                  'Punch Out Time',
+                                  DateFormat('h:mm a').format(_todayRecord!.punchOutTime!),
+                                  AppColors.textPrimary,
+                                ),
+                                const SizedBox(height: 8),
+                              ],
                               if (_todayRecord!.workingHours > 0) ...[
                                 _buildStatRow(
                                   'Working Hours',

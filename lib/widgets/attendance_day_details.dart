@@ -7,17 +7,21 @@ import '../utils/app_colors.dart';
 class AttendanceDayDetails extends StatelessWidget {
   final DateTime date;
   final AttendanceRecord? record;
-  final VoidCallback? onMarkLeave;
-  final VoidCallback? onMarkWeekOff;
-  final VoidCallback? onDelete;
+  final bool isFutureDate;
+  final Function(DateTime) onPunchIn;
+  final Function(DateTime) onPunchOut;
+  final Function(DateTime, AttendanceStatus) onMarkLeaveOrWeekOff;
+  final Function(DateTime) onDeleteRecord;
 
   const AttendanceDayDetails({
     super.key,
     required this.date,
     this.record,
-    this.onMarkLeave,
-    this.onMarkWeekOff,
-    this.onDelete,
+    required this.isFutureDate,
+    required this.onPunchIn,
+    required this.onPunchOut,
+    required this.onMarkLeaveOrWeekOff,
+    required this.onDeleteRecord,
   });
 
   @override
@@ -25,49 +29,62 @@ class AttendanceDayDetails extends StatelessWidget {
     final dateFormatter = DateFormat('EEEE, MMMM d, yyyy');
     final timeFormatter = DateFormat('h:mm a');
     final isToday = DateUtils.isSameDay(date, DateTime.now());
-    final isFutureDate = date.isAfter(DateTime.now());
 
-    return AlertDialog(
-      title: Column(
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: AppColors.white,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            dateFormatter.format(date),
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    dateFormatter.format(date),
+                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                  ),
+                  if (isToday)
+                    Container(
+                      margin: const EdgeInsets.only(top: 4),
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Text(
+                        'Today',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+              IconButton(
+                icon: const Icon(Icons.close),
+                onPressed: () => Navigator.of(context).pop(),
+              ),
+            ],
           ),
-          if (isToday)
-            Container(
-              margin: const EdgeInsets.only(top: 4),
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-              decoration: BoxDecoration(
-                color: AppColors.primary,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: const Text(
-                'Today',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ),
+          const Divider(height: 30),
+          if (record != null) ...[
+            _buildAttendanceInfo(timeFormatter),
+          ] else ...[
+            _buildNoRecordInfo(),
+          ],
+          const SizedBox(height: 20),
+          _buildActionButtons(context),
         ],
       ),
-      content: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            if (record != null) ...[
-              _buildAttendanceInfo(timeFormatter),
-            ] else ...[
-              _buildNoRecordInfo(isFutureDate),
-            ],
-          ],
-        ),
-      ),
-      actions: _buildActions(context, isFutureDate),
     );
   }
 
@@ -195,7 +212,7 @@ class AttendanceDayDetails extends StatelessWidget {
     );
   }
 
-  Widget _buildNoRecordInfo(bool isFutureDate) {
+  Widget _buildNoRecordInfo() {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
@@ -267,52 +284,67 @@ class AttendanceDayDetails extends StatelessWidget {
     );
   }
 
-  List<Widget> _buildActions(BuildContext context, bool isFutureDate) {
-    final actions = <Widget>[];
-    
-    // Cancel button
-    actions.add(
-      TextButton(
-        onPressed: () => Navigator.of(context).pop(),
-        child: const Text('Close'),
-      ),
+  Widget _buildActionButtons(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceAround,
+      children: [
+        // Punch In button
+        if (!isFutureDate && (record == null || record!.status == AttendanceStatus.absent)) 
+          ElevatedButton.icon(
+            onPressed: () => onPunchIn(date),
+            icon: const Icon(Icons.login),
+            label: const Text('Punch In'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.success,
+              foregroundColor: AppColors.white,
+            ),
+          ),
+        // Punch Out button
+        if (!isFutureDate && record != null && record!.isPunchedIn && !record!.isPunchedOut) 
+          ElevatedButton.icon(
+            onPressed: () => onPunchOut(date),
+            icon: const Icon(Icons.logout),
+            label: const Text('Punch Out'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.error,
+              foregroundColor: AppColors.white,
+            ),
+          ),
+        // Mark Leave button (allow for future dates)
+        if (record == null || (record!.status != AttendanceStatus.leave && record!.status != AttendanceStatus.weekOff)) 
+          ElevatedButton.icon(
+            onPressed: () => onMarkLeaveOrWeekOff(date, AttendanceStatus.leave),
+            icon: const Icon(Icons.event_busy),
+            label: const Text('Mark Leave'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.warning,
+              foregroundColor: AppColors.white,
+            ),
+          ),
+        // Mark Week Off button (allow for future dates)
+        if (record == null || (record!.status != AttendanceStatus.leave && record!.status != AttendanceStatus.weekOff)) 
+          ElevatedButton.icon(
+            onPressed: () => onMarkLeaveOrWeekOff(date, AttendanceStatus.weekOff),
+            icon: const Icon(Icons.weekend),
+            label: const Text('Week Off'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.calendarWeekOff,
+              foregroundColor: AppColors.white,
+            ),
+          ),
+        // Delete button (only if record exists)
+        if (record != null) 
+          ElevatedButton.icon(
+            onPressed: () => _showDeleteConfirmation(context),
+            icon: const Icon(Icons.delete),
+            label: const Text('Delete'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.textLight,
+              foregroundColor: AppColors.textDark,
+            ),
+          ),
+      ],
     );
-    
-    // Don't show action buttons for future dates
-    if (isFutureDate) {
-      return actions;
-    }
-    
-    // Delete button (only if record exists)
-    if (record != null && onDelete != null) {
-      actions.insert(0, TextButton(
-        onPressed: () {
-          _showDeleteConfirmation(context);
-        },
-        style: TextButton.styleFrom(foregroundColor: AppColors.error),
-        child: const Text('Delete'),
-      ));
-    }
-    
-    // Mark Leave button (only if no record or not already on leave)
-    if ((record == null || record!.status != AttendanceStatus.leave) && onMarkLeave != null) {
-      actions.insert(0, TextButton(
-        onPressed: onMarkLeave,
-        style: TextButton.styleFrom(foregroundColor: AppColors.warning),
-        child: const Text('Mark Leave'),
-      ));
-    }
-    
-    // Mark Week Off button (only if no record or not already week off)
-    if ((record == null || record!.status != AttendanceStatus.weekOff) && onMarkWeekOff != null) {
-      actions.insert(0, TextButton(
-        onPressed: onMarkWeekOff,
-        style: TextButton.styleFrom(foregroundColor: AppColors.calendarWeekOff),
-        child: const Text('Week Off'),
-      ));
-    }
-    
-    return actions;
   }
 
   void _showDeleteConfirmation(BuildContext context) {
@@ -329,9 +361,7 @@ class AttendanceDayDetails extends StatelessWidget {
           TextButton(
             onPressed: () {
               Navigator.of(context).pop(); // Close confirmation dialog
-              if (onDelete != null) {
-                onDelete!();
-              }
+              onDeleteRecord(date);
             },
             style: TextButton.styleFrom(foregroundColor: AppColors.error),
             child: const Text('Delete'),
@@ -380,4 +410,5 @@ class AttendanceDayDetails extends StatelessWidget {
     }
   }
 }
+
 

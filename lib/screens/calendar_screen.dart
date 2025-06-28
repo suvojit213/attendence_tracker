@@ -97,116 +97,91 @@ class _CalendarScreenState extends State<CalendarScreen> {
       }
       return AppColors.error; // Past dates without record (absent)
     }
-    
+
     switch (record.status) {
       case AttendanceStatus.present:
-        // Check if working hours are complete
-        if (record.isPunchedOut && !record.isWorkingHoursComplete) {
-          return AppColors.warning; // Present but incomplete hours
+        if (record.isPunchedIn && record.isPunchedOut) {
+          // If working hours are less than 1 minute or less than 9 hours, mark as absent
+          if (record.workingHours * 60 < 1 || record.workingHours < 9.0) {
+            return AppColors.error;
+          }
+          return AppColors.success;
         }
-        return AppColors.success; // Present with complete hours
+        return AppColors.warning; // Punched in but not out
       case AttendanceStatus.absent:
         return AppColors.error;
       case AttendanceStatus.leave:
-        return AppColors.warning;
+        return AppColors.leave;
       case AttendanceStatus.weekOff:
-        return AppColors.calendarWeekOff;
+        return AppColors.weekOff;
+      default:
+        return AppColors.textLight;
     }
   }
 
-  Widget _buildCalendarDay(DateTime day, bool isSelected, bool isToday) {
-    final record = _getRecordForDay(day);
-    final dayColor = _getDayColor(day);
-    final isCurrentMonth = day.month == _focusedDay.month;
-    
-    return Container(
-      margin: const EdgeInsets.all(2),
-      decoration: BoxDecoration(
-        color: isSelected 
-            ? AppColors.primary 
-            : (isToday ? AppColors.primaryLight.withOpacity(0.3) : null),
-        borderRadius: BorderRadius.circular(8),
-        border: isToday && !isSelected
-            ? Border.all(color: AppColors.primary, width: 2)
-            : null,
-      ),
-      child: Stack(
-        children: [
-          Center(
-            child: Text(
-              '${day.day}',
-              style: TextStyle(
-                color: isSelected 
-                    ? Colors.white 
-                    : (isCurrentMonth ? AppColors.textPrimary : AppColors.textLight),
-                fontWeight: isToday ? FontWeight.bold : FontWeight.normal,
-              ),
-            ),
-          ),
-          if (record != null || (day.isBefore(DateTime.now()) && record == null))
-            Positioned(
-              bottom: 2,
-              right: 2,
-              child: Container(
-                width: 8,
-                height: 8,
-                decoration: BoxDecoration(
-                  color: dayColor,
-                  shape: BoxShape.circle,
-                ),
-              ),
-            ),
-        ],
-      ),
-    );
+  void _onDaySelected(DateTime selectedDay, DateTime focusedDay) {
+    setState(() {
+      _selectedDay = selectedDay;
+      _focusedDay = focusedDay;
+    });
+    _showAttendanceDetails(selectedDay);
   }
 
-  Future<void> _showDayDetailsDialog(DateTime selectedDay) async {
-    final record = _getRecordForDay(selectedDay);
-    
-    await showDialog(
+  void _showAttendanceDetails(DateTime date) {
+    final record = _getRecordForDay(date);
+    // isFutureDate should only check if the date is strictly in the future, not including today
+    final isFutureDate = date.isAfter(DateTime.now().endOfDay());
+
+    showModalBottomSheet(
       context: context,
-      builder: (context) => AttendanceDayDetails(
-        date: selectedDay,
-        record: record,
-        onMarkLeave: () => _markLeaveOrWeekOff(selectedDay, AttendanceStatus.leave),
-        onMarkWeekOff: () => _markLeaveOrWeekOff(selectedDay, AttendanceStatus.weekOff),
-        onDelete: () => _deleteRecord(selectedDay),
-      ),
+      builder: (context) {
+        return AttendanceDayDetails(
+          date: date,
+          record: record,
+          isFutureDate: isFutureDate,
+          onPunchIn: (selectedDate) async {
+            final success = await _storageService.punchIn(selectedDate);
+            if (success) {
+              _showSuccessSnackBar('Punch-in successful!');
+              _loadAttendanceRecords();
+            } else {
+              _showErrorSnackBar('Failed to punch-in.');
+            }
+            Navigator.pop(context);
+          },
+          onPunchOut: (selectedDate) async {
+            final success = await _storageService.punchOut(selectedDate);
+            if (success) {
+              _showSuccessSnackBar('Punch-out successful!');
+              _loadAttendanceRecords();
+            } else {
+              _showErrorSnackBar('Failed to punch-out.');
+            }
+            Navigator.pop(context);
+          },
+          onMarkLeaveOrWeekOff: (selectedDate, status) async {
+            final success = await _storageService.markLeaveOrWeekOff(selectedDate, status);
+            if (success) {
+              _showSuccessSnackBar('${status.value} marked for ${DateFormat('MMM dd, yyyy').format(selectedDate)}');
+              _loadAttendanceRecords();
+            } else {
+              _showErrorSnackBar('Failed to mark ${status.value}.');
+            }
+            Navigator.pop(context);
+          },
+          onDeleteRecord: (selectedDate) async {
+            final success = await _storageService.deleteAttendanceRecord(selectedDate);
+            if (success) {
+              _showSuccessSnackBar('Record deleted for ${DateFormat('MMM dd, yyyy').format(selectedDate)}');
+              _loadAttendanceRecords();
+            } else {
+              _showErrorSnackBar('Failed to delete record.');
+            }
+            Navigator.pop(context);
+          },
+        );
+      },
     );
-    
-    // Refresh data after dialog closes
-    await _loadAttendanceRecords();
-  }
-
-  Future<void> _markLeaveOrWeekOff(DateTime date, AttendanceStatus status) async {
-    try {
-      final success = await _storageService.markLeaveOrWeekOff(date, status);
-      if (success) {
-        Navigator.of(context).pop(); // Close dialog
-        _showSuccessSnackBar('${status.displayName} marked successfully!');
-        await _loadAttendanceRecords();
-      } else {
-        _showErrorSnackBar('Failed to mark ${status.displayName.toLowerCase()}');
-      }
-    } catch (e) {
-      _showErrorSnackBar('Error: $e');
-    }
-  }
-
-  Future<void> _deleteRecord(DateTime date) async {
-    try {
-      final success = await _storageService.deleteAttendanceRecord(date);
-      if (success) {
-        Navigator.of(context).pop(); // Close dialog
-        _showSuccessSnackBar('Record deleted successfully!');
-        await _loadAttendanceRecords();
-      } else {
-        _showErrorSnackBar('Failed to delete record');
-      }
-    } catch (e) {
-      _showErrorSnackBar('Error: $e');
-    }
   }
 
   @override
@@ -214,234 +189,117 @@ class _CalendarScreenState extends State<CalendarScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Attendance Calendar'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.info_outline),
-            onPressed: _showLegendDialog,
-          ),
-        ],
+        backgroundColor: AppColors.primary,
+        foregroundColor: AppColors.white,
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : Column(
               children: [
-                // Calendar
-                Card(
-                  margin: const EdgeInsets.all(16),
-                  child: TableCalendar<AttendanceRecord>(
-                    firstDay: DateTime.utc(2020, 1, 1),
-                    lastDay: DateTime.utc(2030, 12, 31),
-                    focusedDay: _focusedDay,
-                    selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
-                    calendarFormat: CalendarFormat.month,
-                    startingDayOfWeek: StartingDayOfWeek.monday,
-                    calendarStyle: CalendarStyle(
-                      outsideDaysVisible: true,
-                      weekendTextStyle: TextStyle(color: AppColors.calendarWeekend),
-                      holidayTextStyle: TextStyle(color: AppColors.error),
-                      selectedDecoration: BoxDecoration(
-                        color: AppColors.primary,
-                        shape: BoxShape.circle,
-                      ),
-                      todayDecoration: BoxDecoration(
-                        color: AppColors.primaryLight,
-                        shape: BoxShape.circle,
-                      ),
-                      markerDecoration: BoxDecoration(
-                        color: AppColors.success,
-                        shape: BoxShape.circle,
-                      ),
+                TableCalendar(
+                  firstDay: DateTime.utc(2020, 1, 1),
+                  lastDay: DateTime.utc(2030, 12, 31),
+                  focusedDay: _focusedDay,
+                  selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
+                  calendarFormat: CalendarFormat.month,
+                  startingDayOfWeek: StartingDayOfWeek.monday,
+                  headerStyle: HeaderStyle(
+                    formatButtonVisible: false,
+                    titleCentered: true,
+                    titleTextStyle: TextStyle(
+                      color: AppColors.primary,
+                      fontSize: 18.0,
+                      fontWeight: FontWeight.bold,
                     ),
-                    headerStyle: HeaderStyle(
-                      formatButtonVisible: false,
-                      titleCentered: true,
-                      titleTextStyle: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.textPrimary,
-                      ),
-                    ),
-                    calendarBuilders: CalendarBuilders(
-                      defaultBuilder: (context, day, focusedDay) {
-                        return _buildCalendarDay(day, false, isSameDay(day, DateTime.now()));
-                      },
-                      selectedBuilder: (context, day, focusedDay) {
-                        return _buildCalendarDay(day, true, isSameDay(day, DateTime.now()));
-                      },
-                      todayBuilder: (context, day, focusedDay) {
-                        return _buildCalendarDay(day, false, true);
-                      },
-                    ),
-                    onDaySelected: (selectedDay, focusedDay) {
-                      setState(() {
-                        _selectedDay = selectedDay;
-                        _focusedDay = focusedDay;
-                      });
-                      _showDayDetailsDialog(selectedDay);
-                    },
-                    onPageChanged: (focusedDay) {
-                      setState(() {
-                        _focusedDay = focusedDay;
-                      });
-                      _loadAttendanceRecords();
-                    },
+                    leftChevronIcon: Icon(Icons.chevron_left, color: AppColors.primary),
+                    rightChevronIcon: Icon(Icons.chevron_right, color: AppColors.primary),
                   ),
-                ),
-                
-                // Legend
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: Card(
-                    child: Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Legend',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.textPrimary,
+                  calendarStyle: CalendarStyle(
+                    outsideDaysVisible: false,
+                    todayDecoration: BoxDecoration(
+                      color: AppColors.primary.withOpacity(0.5),
+                      shape: BoxShape.circle,
+                    ),
+                    selectedDecoration: BoxDecoration(
+                      color: AppColors.primary,
+                      shape: BoxShape.circle,
+                    ),
+                    defaultTextStyle: TextStyle(color: AppColors.textDark),
+                    weekendTextStyle: TextStyle(color: AppColors.textDark),
+                    holidayTextStyle: TextStyle(color: AppColors.textDark),
+                  ),
+                  onDaySelected: _onDaySelected,
+                  onPageChanged: (focusedDay) {
+                    _focusedDay = focusedDay;
+                    _loadAttendanceRecords();
+                  },
+                  calendarBuilders: CalendarBuilders(
+                    defaultBuilder: (context, day, focusedDay) {
+                      return Center(
+                        child: Text(
+                          '${day.day}',
+                          style: TextStyle(color: _getDayColor(day)),
+                        ),
+                      );
+                    },
+                    todayBuilder: (context, day, focusedDay) {
+                      return Center(
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: AppColors.primary.withOpacity(0.5),
+                            shape: BoxShape.circle,
+                          ),
+                          padding: const EdgeInsets.all(8.0),
+                          child: Text(
+                            '${day.day}',
+                            style: TextStyle(color: AppColors.white),
+                          ),
+                        ),
+                      );
+                    },
+                    selectedBuilder: (context, day, focusedDay) {
+                      return Center(
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: AppColors.primary,
+                            shape: BoxShape.circle,
+                          ),
+                          padding: const EdgeInsets.all(8.0),
+                          child: Text(
+                            '${day.day}',
+                            style: TextStyle(color: AppColors.white),
+                          ),
+                        ),
+                      );
+                    },
+                    markerBuilder: (context, day, events) {
+                      final record = _getRecordForDay(day);
+                      if (record != null) {
+                        return Positioned(
+                          bottom: 1,
+                          child: Container(
+                            width: 6,
+                            height: 6,
+                            decoration: BoxDecoration(
+                              color: _getDayColor(day), // Use the same color logic as the day text
+                              shape: BoxShape.circle,
                             ),
                           ),
-                          const SizedBox(height: 12),
-                          Wrap(
-                            spacing: 16,
-                            runSpacing: 8,
-                            children: [
-                              _buildLegendItem('Present', AppColors.success),
-                              _buildLegendItem('Absent/Incomplete', AppColors.error),
-                              _buildLegendItem('Leave', AppColors.warning),
-                              _buildLegendItem('Week Off', AppColors.calendarWeekOff),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
+                        );
+                      }
+                      return null;
+                    },
                   ),
                 ),
-                
-                const SizedBox(height: 16),
               ],
             ),
     );
   }
+}
 
-  Widget _buildLegendItem(String label, Color color) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          width: 12,
-          height: 12,
-          decoration: BoxDecoration(
-            color: color,
-            shape: BoxShape.circle,
-          ),
-        ),
-        const SizedBox(width: 6),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 12,
-            color: AppColors.textSecondary,
-          ),
-        ),
-      ],
-    );
-  }
-
-  void _showLegendDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Calendar Legend'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildLegendDialogItem(
-              'Green dot', 
-              AppColors.success, 
-              'Present with complete hours (9+ hours)'
-            ),
-            const SizedBox(height: 8),
-            _buildLegendDialogItem(
-              'Red dot', 
-              AppColors.error, 
-              'Absent or incomplete hours (less than 9 hours)'
-            ),
-            const SizedBox(height: 8),
-            _buildLegendDialogItem(
-              'Orange dot', 
-              AppColors.warning, 
-              'On leave'
-            ),
-            const SizedBox(height: 8),
-            _buildLegendDialogItem(
-              'Purple dot', 
-              AppColors.calendarWeekOff, 
-              'Week off'
-            ),
-            const SizedBox(height: 12),
-            Text(
-              'Tap on any date to view details or mark leave/week off.',
-              style: TextStyle(
-                fontSize: 12,
-                color: AppColors.textSecondary,
-                fontStyle: FontStyle.italic,
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('OK'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildLegendDialogItem(String title, Color color, String description) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Container(
-          width: 12,
-          height: 12,
-          margin: const EdgeInsets.only(top: 2),
-          decoration: BoxDecoration(
-            color: color,
-            shape: BoxShape.circle,
-          ),
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              Text(
-                description,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: AppColors.textSecondary,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
+extension DateTimeExtension on DateTime {
+  DateTime endOfDay() {
+    return DateTime(year, month, day, 23, 59, 59, 999, 999);
   }
 }
 

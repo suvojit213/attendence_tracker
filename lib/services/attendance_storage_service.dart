@@ -128,8 +128,28 @@ class AttendanceStorageService {
         return false; // Already punched out
       }
       
+      DateTime punchOutTime = DateTime.now();
+      AttendanceStatus finalStatus = AttendanceStatus.present;
+
+      // Calculate working hours to determine final status
+      // Adjust punchOutTime for overnight shifts for calculation
+      DateTime effectivePunchOutTime = punchOutTime;
+      if (punchOutTime.isBefore(existingRecord.punchInTime!)) {
+        effectivePunchOutTime = punchOutTime.add(const Duration(days: 1));
+      }
+      final duration = effectivePunchOutTime.difference(existingRecord.punchInTime!); 
+      final double workingHours = duration.inMinutes / 60.0;
+
+      // If working hours are less than 1 minute, mark as absent
+      if (workingHours * 60 < 1) {
+        finalStatus = AttendanceStatus.absent;
+      } else if (workingHours < 9.0) {
+        finalStatus = AttendanceStatus.absent;
+      }
+
       final updatedRecord = existingRecord.copyWith(
-        punchOutTime: DateTime.now(),
+        punchOutTime: punchOutTime,
+        status: finalStatus,
       );
       
       // Determine the effective date for the attendance record

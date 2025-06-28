@@ -285,8 +285,10 @@ class AttendanceDayDetails extends StatelessWidget {
   }
 
   Widget _buildActionButtons(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceAround,
+    return Wrap(
+      spacing: 10.0, // horizontal space between buttons
+      runSpacing: 10.0, // vertical space between lines of buttons
+      alignment: WrapAlignment.center,
       children: [
         // Punch In button
         if (!isFutureDate && (record == null || record!.status == AttendanceStatus.absent)) 

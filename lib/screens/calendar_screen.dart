@@ -46,21 +46,47 @@ class _CalendarScreenState extends State<CalendarScreen> {
       );
       
       final recordsMap = <String, AttendanceRecord>{};
+      for (final record in records) {
+        recordsMap[record.dateKey] = record;
+      }
+      
       _presentCount = 0;
       _absentCount = 0;
       _leaveCount = 0;
       _weekOffCount = 0;
 
-      for (final record in records) {
-        recordsMap[record.dateKey] = record;
-        if (record.status == AttendanceStatus.present) {
-          _presentCount++;
-        } else if (record.status == AttendanceStatus.absent) {
+      // Iterate through all days of the month to count attendance statuses
+      final daysInMonth = DateTime(_focusedDay.year, _focusedDay.month + 1, 0).day;
+      for (int i = 1; i <= daysInMonth; i++) {
+        final day = DateTime(_focusedDay.year, _focusedDay.month, i);
+        final record = recordsMap[_getDateKey(day)];
+
+        if (day.isAfter(DateTime.now())) {
+          // Future dates are not counted as anything yet
+          continue;
+        }
+
+        if (record == null) {
           _absentCount++;
-        } else if (record.status == AttendanceStatus.leave) {
-          _leaveCount++;
-        } else if (record.status == AttendanceStatus.weekOff) {
-          _weekOffCount++;
+        } else {
+          switch (record.status) {
+            case AttendanceStatus.present:
+              if (record.isPunchedIn && record.isPunchedOut && record.workingHours >= 9.0) {
+                _presentCount++;
+              } else {
+                _absentCount++; // Incomplete working hours or not punched out fully
+              }
+              break;
+            case AttendanceStatus.absent:
+              _absentCount++;
+              break;
+            case AttendanceStatus.leave:
+              _leaveCount++;
+              break;
+            case AttendanceStatus.weekOff:
+              _weekOffCount++;
+              break;
+          }
         }
       }
       

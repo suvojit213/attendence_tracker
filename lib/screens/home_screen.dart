@@ -20,8 +20,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   final AttendanceStorageService _storageService = AttendanceStorageService.instance;
   AttendanceRecord? _todayRecord;
   bool _isLoading = false;
-  
-  // Optimized animation controllers - reduced complexity
+
   late AnimationController _fadeController;
   late Animation<double> _fadeAnimation;
 
@@ -33,9 +32,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   }
 
   void _initializeAnimations() {
-    // Simplified animation - single controller for better performance
     _fadeController = AnimationController(
-      duration: const Duration(milliseconds: 600), // Reduced duration
+      duration: const Duration(milliseconds: 600),
       vsync: this,
     );
     
@@ -44,7 +42,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       end: 1.0,
     ).animate(CurvedAnimation(
       parent: _fadeController,
-      curve: Curves.easeOut, // Simpler curve for better performance
+      curve: Curves.easeOut,
     ));
     
     _fadeController.forward();
@@ -57,32 +55,28 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   }
 
   Future<void> _loadTodayRecord() async {
-    if (mounted) {
-      setState(() {
-        _isLoading = true;
-      });
-    }
+    if (mounted) setState(() => _isLoading = true);
 
     try {
+      await _storageService.init(); // Ensure service is initialized
       final today = DateTime.now();
       final record = await _storageService.getAttendanceRecord(today);
       if (mounted) {
         setState(() {
           _todayRecord = record;
-          _isLoading = false;
         });
       }
     } catch (e) {
       if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
         _showErrorSnackBar('Error loading today\'s record: $e');
       }
+    } finally {
+        if(mounted) setState(() => _isLoading = false);
     }
   }
 
-  Future<void> _punchIn() async {
+  // Generic punch-in logic (automatic or manual)
+  Future<void> _performPunchIn({DateTime? manualTime}) async {
     final now = DateTime.now();
     
     if (!_storageService.isPunchingAllowed(now)) {
@@ -90,14 +84,15 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       return;
     }
 
-    if (mounted) {
-      setState(() {
-        _isLoading = true;
-      });
+    if (manualTime != null && manualTime.isAfter(DateTime.now())) {
+      _showErrorSnackBar("Manual punch-in time cannot be in the future.");
+      return;
     }
 
+    if (mounted) setState(() => _isLoading = true);
+
     try {
-      final success = await _storageService.punchIn(now);
+      final success = await _storageService.punchIn(now, punchTime: manualTime);
       if (success && mounted) {
         await _loadTodayRecord();
         _showSuccessSnackBar('Punched in successfully! 🎉');
@@ -107,15 +102,12 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         _showErrorSnackBar(e.toString().replaceFirst('Exception: ', ''));
       }
     } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
-  Future<void> _punchOut() async {
+  // Generic punch-out logic (automatic or manual)
+  Future<void> _performPunchOut({DateTime? manualTime}) async {
     final now = DateTime.now();
     
     if (!_storageService.isPunchingAllowed(now)) {
@@ -123,14 +115,15 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       return;
     }
 
-    if (mounted) {
-      setState(() {
-        _isLoading = true;
-      });
+     if (manualTime != null && manualTime.isAfter(DateTime.now())) {
+      _showErrorSnackBar("Manual punch-out time cannot be in the future.");
+      return;
     }
+    
+    if (mounted) setState(() => _isLoading = true);
 
     try {
-      final success = await _storageService.punchOut(now);
+      final success = await _storageService.punchOut(now, punchTime: manualTime);
       if (success && mounted) {
         await _loadTodayRecord();
         _showSuccessSnackBar('Punched out successfully! 👋');
@@ -140,13 +133,59 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         _showErrorSnackBar(e.toString().replaceFirst('Exception: ', ''));
       }
     } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
+      if (mounted) setState(() => _isLoading = false);
     }
   }
+
+  // Show time picker for manual punch-in
+  Future<void> _manualPunchIn() async {
+    final now = DateTime.now();
+    final selectedTime = await showTimePicker(
+        context: context,
+        initialTime: TimeOfDay.fromDateTime(now),
+        helpText: 'Select Punch-In Time',
+    );
+
+    if (selectedTime != null) {
+        final selectedDateTime = DateTime(
+            now.year, now.month, now.day,
+            selectedTime.hour, selectedTime.minute
+        );
+        await _performPunchIn(manualTime: selectedDateTime);
+    }
+  }
+
+  // Show time picker for manual punch-out
+  Future<void> _manualPunchOut() async {
+    final now = DateTime.now();
+    final record = await _storageService.getAttendanceRecord(now);
+
+    if (record?.punchInTime == null) {
+      _showErrorSnackBar("You must punch in first.");
+      return;
+    }
+
+    final selectedTime = await showTimePicker(
+        context: context,
+        initialTime: TimeOfDay.fromDateTime(now),
+        helpText: 'Select Punch-Out Time',
+    );
+
+    if (selectedTime != null) {
+        final selectedDateTime = DateTime(
+            now.year, now.month, now.day,
+            selectedTime.hour, selectedTime.minute
+        );
+
+        if(selectedDateTime.isBefore(record!.punchInTime!)) {
+           _showErrorSnackBar("Punch-out time cannot be before punch-in time.");
+           return;
+        }
+
+        await _performPunchOut(manualTime: selectedDateTime);
+    }
+  }
+
 
   void _showSuccessSnackBar(String message) {
     if (!mounted) return;
@@ -176,7 +215,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         margin: const EdgeInsets.all(16),
-        duration: const Duration(seconds: 2), // Reduced duration
+        duration: const Duration(seconds: 2),
       ),
     );
   }
@@ -329,11 +368,15 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
     final now = DateTime.now();
-    final dateFormatter = DateFormat('EEEE, MMMM d, yyyy');
+    final dateFormatter = DateFormat('EEEE, MMMM d, הערב');
     final timeFormatter = DateFormat('h:mm a');
 
+    // Button states
+    final bool canPunchIn = _todayRecord?.isPunchedIn != true;
+    final bool canPunchOut = _todayRecord?.isPunchedIn == true && _todayRecord?.isPunchedOut != true;
+
     return Scaffold(
-      backgroundColor: AppColors.background, // Direct color instead of gradient for better performance
+      backgroundColor: AppColors.background,
       appBar: AppBar(
         title: const Text('Attendance Tracker Pro'),
         backgroundColor: Colors.white,
@@ -384,7 +427,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Simplified Date and Time Header
                       Container(
                         width: double.infinity,
                         padding: const EdgeInsets.all(24),
@@ -421,13 +463,18 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                               ],
                             ),
                             const SizedBox(height: 12),
-                            Text(
-                              timeFormatter.format(now),
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 32,
-                                fontWeight: FontWeight.w700,
-                              ),
+                            StreamBuilder(
+                              stream: Stream.periodic(const Duration(seconds: 1)),
+                              builder: (context, snapshot) {
+                                return Text(
+                                  timeFormatter.format(DateTime.now()),
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 32,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                );
+                              },
                             ),
                             const SizedBox(height: 8),
                             Container(
@@ -451,7 +498,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                       
                       const SizedBox(height: 24),
                       
-                      // Attendance Summary Card
                       AttendanceSummaryCard(
                         record: _todayRecord,
                         onRefresh: _loadTodayRecord,
@@ -459,7 +505,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                       
                       const SizedBox(height: 24),
                       
-                      // Punch Buttons
                       Row(
                         children: [
                           Expanded(
@@ -467,11 +512,11 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                               title: 'Punch In',
                               subtitle: _todayRecord?.punchInTime != null
                                   ? DateFormat('h:mm a').format(_todayRecord!.punchInTime!)
-                                  : 'Not punched in',
+                                  : 'Tap to Punch In',
                               icon: Icons.login_rounded,
                               gradient: AppColors.successGradient,
-                              onPressed: _todayRecord?.isPunchedIn == true ? null : _punchIn,
-                              isCompleted: _todayRecord?.isPunchedIn == true,
+                              onPressed: canPunchIn ? () => _performPunchIn() : null,
+                              isCompleted: !canPunchIn,
                             ),
                           ),
                           const SizedBox(width: 16),
@@ -480,21 +525,62 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                               title: 'Punch Out',
                               subtitle: _todayRecord?.punchOutTime != null
                                   ? DateFormat('h:mm a').format(_todayRecord!.punchOutTime!)
-                                  : 'Not punched out',
+                                  : 'Tap to Punch Out',
                               icon: Icons.logout_rounded,
                               gradient: AppColors.errorGradient,
-                              onPressed: (_todayRecord?.isPunchedIn != true || _todayRecord?.isPunchedOut == true) 
-                                  ? null 
-                                  : _punchOut,
+                              onPressed: canPunchOut ? () => _performPunchOut() : null,
                               isCompleted: _todayRecord?.isPunchedOut == true,
                             ),
                           ),
                         ],
                       ),
                       
+                      const SizedBox(height: 16),
+
+                      // Manual Punch Buttons
+                      Container(
+                        padding: const EdgeInsets.symmetric(vertical: 8.0),
+                        decoration: BoxDecoration(
+                          color: AppColors.surfaceLight,
+                          borderRadius: BorderRadius.circular(16)
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: [
+                            TextButton.icon(
+                              onPressed: canPunchIn ? _manualPunchIn : null, 
+                              icon: Icon(
+                                Icons.edit_calendar_outlined, 
+                                color: canPunchIn ? AppColors.primary : Colors.grey,
+                              ), 
+                              label: Text(
+                                'Manual Punch In',
+                                style: TextStyle(
+                                  color: canPunchIn ? AppColors.primary : Colors.grey,
+                                  fontWeight: FontWeight.w600
+                                ),
+                              )
+                            ),
+                             TextButton.icon(
+                              onPressed: canPunchOut ? _manualPunchOut : null, 
+                              icon: Icon(
+                                Icons.edit_calendar_outlined,
+                                color: canPunchOut ? AppColors.error : Colors.grey,
+                                ), 
+                              label: Text(
+                                'Manual Punch Out',
+                                style: TextStyle(
+                                  color: canPunchOut ? AppColors.error : Colors.grey,
+                                   fontWeight: FontWeight.w600
+                                ),
+                              )
+                            )
+                          ],
+                        ),
+                      ),
+
                       const SizedBox(height: 24),
                       
-                      // Simplified Quick Stats
                       if (_todayRecord != null) ...[
                         Container(
                           decoration: BoxDecoration(
@@ -572,7 +658,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                                   const SizedBox(height: 12),
                                 ],
                                 if (!_todayRecord!.isWorkingHoursComplete && 
-                                    _todayRecord!.workingHours > 0) ...[
+                                    _todayRecord!.isPunchedIn &&
+                                    !_todayRecord!.isPunchedOut) ...[
                                   _buildStatRow(
                                     'Hours Remaining',
                                     '${(9 - _todayRecord!.workingHours).toStringAsFixed(1)}h',
@@ -636,3 +723,4 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     }
   }
 }
+

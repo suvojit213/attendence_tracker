@@ -38,8 +38,9 @@ class AttendanceStorageService {
 
   // Validate date for punching operations
   bool _validatePunchDate(DateTime date) {
-    if (_isPastDate(date)) {
-      return false; // Cannot punch for past dates
+    // For this app, we are only allowing today's date for punching
+    if (!_isToday(date)) {
+        return false;
     }
     return true;
   }
@@ -50,13 +51,9 @@ class AttendanceStorageService {
     try {
       final records = await getAllAttendanceRecords();
       
-      // Remove existing record for the same date if any
       records.removeWhere((r) => r.dateKey == record.dateKey);
-      
-      // Add new record
       records.add(record);
       
-      // Convert to JSON and save
       final jsonList = records.map((r) => r.toJson()).toList();
       final jsonString = jsonEncode(jsonList);
       
@@ -74,10 +71,9 @@ class AttendanceStorageService {
       final records = await getAllAttendanceRecords();
       final dateKey = '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
       
-      for (final record in records) {
-        if (record.dateKey == dateKey) {
-          return record;
-        }
+      final matchingRecords = records.where((record) => record.dateKey == dateKey);
+      if (matchingRecords.isNotEmpty) {
+        return matchingRecords.first;
       }
       return null;
     } catch (e) {
@@ -117,17 +113,11 @@ class AttendanceStorageService {
     }
   }
 
-  // Punch in with date validation
-  Future<bool> punchIn(DateTime date) async {
+  // Punch in with date validation and optional manual time
+  Future<bool> punchIn(DateTime date, {DateTime? punchTime}) async {
     try {
-      // Validate that the date is not in the past
       if (!_validatePunchDate(date)) {
         throw Exception('Cannot punch in for past dates. Please punch in for today only.');
-      }
-
-      // Only allow punching for today
-      if (!_isToday(date)) {
-        throw Exception('You can only punch in for today. Past date punching is not allowed.');
       }
 
       final existingRecord = await getAttendanceRecord(date);
@@ -138,28 +128,22 @@ class AttendanceStorageService {
       
       final record = AttendanceRecord(
         date: DateTime(date.year, date.month, date.day),
-        punchInTime: DateTime.now(),
+        punchInTime: punchTime ?? DateTime.now(), // Use manual time if provided
         status: AttendanceStatus.present,
       );
       
       return await saveAttendanceRecord(record);
     } catch (e) {
       print('Error punching in: $e');
-      rethrow; // Re-throw to let the UI handle the specific error message
+      rethrow;
     }
   }
 
-  // Punch out with date validation
-  Future<bool> punchOut(DateTime date) async {
+  // Punch out with date validation and optional manual time
+  Future<bool> punchOut(DateTime date, {DateTime? punchTime}) async {
     try {
-      // Validate that the date is not in the past
       if (!_validatePunchDate(date)) {
         throw Exception('Cannot punch out for past dates. Please punch out for today only.');
-      }
-
-      // Only allow punching for today
-      if (!_isToday(date)) {
-        throw Exception('You can only punch out for today. Past date punching is not allowed.');
       }
 
       final existingRecord = await getAttendanceRecord(date);
@@ -172,22 +156,19 @@ class AttendanceStorageService {
         throw Exception('You have already punched out for today.');
       }
       
-      DateTime punchOutTime = DateTime.now();
+      DateTime punchOutTime = punchTime ?? DateTime.now(); // Use manual time if provided
+      
+      // Additional validation for manual time
+      if (punchOutTime.isBefore(existingRecord.punchInTime!)) {
+        throw Exception('Punch-out time cannot be earlier than punch-in time.');
+      }
+
       AttendanceStatus finalStatus = AttendanceStatus.present;
 
-      // Calculate working hours to determine final status
-      // Adjust punchOutTime for overnight shifts for calculation
-      DateTime effectivePunchOutTime = punchOutTime;
-      if (punchOutTime.isBefore(existingRecord.punchInTime!)) {
-        effectivePunchOutTime = punchOutTime.add(const Duration(days: 1));
-      }
-      final duration = effectivePunchOutTime.difference(existingRecord.punchInTime!); 
+      final duration = punchOutTime.difference(existingRecord.punchInTime!); 
       final double workingHours = duration.inMinutes / 60.0;
 
-      // If working hours are less than 1 minute, mark as absent
-      if (workingHours * 60 < 1) {
-        finalStatus = AttendanceStatus.absent;
-      } else if (workingHours < 9.0) {
+      if (workingHours < 9.0) {
         finalStatus = AttendanceStatus.absent;
       }
 
@@ -196,37 +177,14 @@ class AttendanceStorageService {
         status: finalStatus,
       );
       
-      // Determine the effective date for the attendance record
-      // If punch-out is on the next day but within a reasonable overnight shift window (e.g., before 6 AM),
-      // consider it for the punch-in date.
-      DateTime effectiveDate = existingRecord.date;
-      if (updatedRecord.punchInTime != null && updatedRecord.punchOutTime != null) {
-        if (updatedRecord.punchOutTime!.isBefore(updatedRecord.punchInTime!)) {
-          // This means punch-out is on the next day
-          // Check if the punch-out is early morning (e.g., before 6 AM) of the next day
-          if (updatedRecord.punchOutTime!.hour < 6) {
-            effectiveDate = existingRecord.date; // Keep the original punch-in date
-          } else {
-            effectiveDate = updatedRecord.punchOutTime!; // Use the punch-out date
-          }
-        } else if (updatedRecord.punchOutTime!.day != existingRecord.date.day) {
-          // If punch-out is on a different day but not before punch-in (e.g., 3 PM to 3 PM next day)
-          // This case might need more specific handling based on shift definitions.
-          // For now, if it's a new day, use the punch-out date.
-          effectiveDate = updatedRecord.punchOutTime!;
-        }
-      }
-
-      final finalRecord = updatedRecord.copyWith(date: DateTime(effectiveDate.year, effectiveDate.month, effectiveDate.day));
-      
-      return await saveAttendanceRecord(finalRecord);
+      return await saveAttendanceRecord(updatedRecord);
     } catch (e) {
       print('Error punching out: $e');
-      rethrow; // Re-throw to let the UI handle the specific error message
+      rethrow;
     }
   }
 
-  // Mark leave or week off (this can be done for past dates for administrative purposes)
+  // Mark leave or week off
   Future<bool> markLeaveOrWeekOff(DateTime date, AttendanceStatus status) async {
     try {
       if (status != AttendanceStatus.leave && status != AttendanceStatus.weekOff) {
@@ -266,12 +224,10 @@ class AttendanceStorageService {
     }
   }
 
-  // Get error message for past date validation
   String getPastDateErrorMessage() {
     return 'Past date punching is not allowed. You can only punch in/out for today.';
   }
 
-  // Check if punching is allowed for the given date
   bool isPunchingAllowed(DateTime date) {
     return _isToday(date) && !_isPastDate(date);
   }

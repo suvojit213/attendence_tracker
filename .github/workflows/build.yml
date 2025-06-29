@@ -1,12 +1,11 @@
 #
-# 🚀 Enhanced Flutter Build, Release, and Notify Workflow 🚀
+# 🚀 Enhanced Flutter Build, Release, and Notify Workflow with Auto-Commit 🚀
 #
 # What's new and improved?
-# 1.  **Semantic Versioning**: Reads the version directly from your `pubspec.yaml` file.
-# 2.  **Dedicated Actions**: Uses specialized GitHub Actions for cleaner, more reliable code.
-# 3.  **Enhanced Security**: Fetches secrets securely using `secrets.VARIABLE_NAME`.
-# 4.  **FIXED**: Correctly displays the release timestamp.
-# 5.  **FIXED & UPGRADED ✨**: Replaced the problematic changelog generator with `mikepenz/release-changelog-builder-action`, a more reliable and popular action to fix the "action not found" error.
+# 1.  **AUTOMATIC COMMIT ✨**: The workflow now automatically commits the NDK version fix to your repository. This runs only once and keeps your codebase clean.
+# 2.  **Semantic Versioning**: Reads the version directly from your `pubspec.yaml` file.
+# 3.  **Dedicated Actions**: Uses specialized GitHub Actions for cleaner, more reliable code.
+# 4.  **Enhanced Security**: Fetches secrets securely using `secrets.VARIABLE_NAME`.
 #
 
 name: 🚀 Flutter Build, Release & Notify
@@ -21,34 +20,45 @@ jobs:
   build-and-release:
     runs-on: ubuntu-latest
     permissions:
-      contents: write # This permission is required to create releases and upload assets
+      contents: write # This permission is required to create releases, upload assets, AND commit changes.
 
     steps:
       - name: ✅ Checkout Code
         uses: actions/checkout@v4
         with:
-          # We need to fetch all history and tags for the changelog generator to work correctly
           fetch-depth: 0
-
-      - name: 📦 Install jq
-        run: sudo apt-get install -y jq
-        # jq is a lightweight and flexible command-line JSON processor.
 
       - name: ⚙️ Setup Environment Variables
         id: setup_vars
         run: |
-          # Read the version from pubspec.yaml
-          APP_VERSION=$(cat pubspec.yaml | grep 'version:' | awk '{print $2}')
+          APP_VERSION=$(grep 'version:' pubspec.yaml | sed 's/version: //')
           echo "RELEASE_TAG=v${APP_VERSION}" >> $GITHUB_ENV
-          # Get the current timestamp
           echo "CURRENT_DATE_TIME=$(date +"%Y-%m-%d %H:%M:%S")" >> $GITHUB_ENV
 
       - name: 🐦 Set up Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.32.5'
           channel: 'stable'
           cache: true
+
+      - name: 🛠️ Apply Android NDK Version Fix
+        run: |
+          # We check if the line already exists. If not, we add it.
+          # This prevents duplicate entries in the file on subsequent runs.
+          if ! grep -q "android.ndkVersion" android/app/build.gradle.kts; then
+            echo "NDK version not found. Applying fix..."
+            echo "" >> android/app/build.gradle.kts # Add a newline for spacing
+            echo "android.ndkVersion = \"27.0.12077973\"" >> android/app/build.gradle.kts
+          else
+            echo "NDK version already set. Skipping fix."
+          fi
+
+      - name: ✨ [AUTO-COMMIT] Commit NDK Fix
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "ci: Automatically set Android NDK version"
+          branch: main
+          file_pattern: 'android/app/build.gradle.kts' # Only commit changes to this file
 
       - name: 🔄 Get Dependencies
         run: flutter pub get
@@ -61,6 +71,15 @@ jobs:
           mkdir -p release_artifacts
           mv build/app/outputs/flutter-apk/app-release.apk release_artifacts/Attendence-Tracker-${{ env.RELEASE_TAG }}.apk
 
+      - name: 📝 Generate Changelog
+        id: changelog
+        uses: mikepenz/release-changelog-builder-action@v4
+        with:
+          fromTag: ${{ github.ref }}
+          toTag: ${{ github.ref }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: 🚀 Create GitHub Release & Upload APK
         uses: softprops/action-gh-release@v2
         with:
@@ -70,6 +89,9 @@ jobs:
             ## ✨ New Release: ${{ env.RELEASE_TAG }}
             **App:** Attendence Tracker
             **Released On:** ${{ env.CURRENT_DATE_TIME }}
+            
+            ### 📜 Changelog
+            ${{ steps.changelog.outputs.changelog }}
             
             Another awesome update is here! Grab the APK below. 👇
           files: release_artifacts/*
@@ -83,7 +105,7 @@ jobs:
           message: |
             *🚀 New Flutter Release!*
 
-            *App:* `Issue Tracker`
+            *App:* `Attendence Tracker`
             *Version:* `${{ env.RELEASE_TAG }}`
 
             *Changes:*
@@ -91,3 +113,4 @@ jobs:
 
             A new version has just been released. Check it out on GitHub!
             [View Release](${{ github.server_url }}/${{ github.repository }}/releases/tag/${{ env.RELEASE_TAG }})
+

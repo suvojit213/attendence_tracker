@@ -770,7 +770,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                                     ),
                                     const SizedBox(width: 12),
                                     Text(
-                                      'Today's Summary',
+                                      "Today's Summary",
                                       style: TextStyle(
                                         fontSize: 18,
                                         fontWeight: FontWeight.w700,

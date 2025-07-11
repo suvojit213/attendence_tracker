@@ -114,7 +114,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   }
 
   Future<void> _loadTodayRecord() async {
-    if (mounted) setState(() => _isLoading = true);
+    if (mounted) setState(() {
+      _isLoading = true;
+    });
 
     try {
       await _storageService.init(); // Ensure service is initialized
@@ -127,10 +129,12 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       }
     } catch (e) {
       if (mounted) {
-        _showErrorSnackBar('Error loading today's record: $e');
+        _showErrorSnackBar('Error loading today\'s record: $e');
       }
     } finally {
-        if(mounted) setState(() => _isLoading = false);
+        if(mounted) setState(() {
+          _isLoading = false;
+        });
     }
   }
 
@@ -144,7 +148,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   }
 
   Future<void> _loadWeeklySummary() async {
-    if (mounted) setState(() => _isLoading = true);
+    if (mounted) setState(() {
+      _isLoading = true;
+    });
 
     try {
       final now = DateTime.now();
@@ -191,7 +197,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         _showErrorSnackBar('Error loading weekly summary: $e');
       }
     } finally {
-      if (mounted) setState(() => _isLoading = false);
+      if (mounted) setState(() {
+        _isLoading = false;
+      });
     }
   }
 

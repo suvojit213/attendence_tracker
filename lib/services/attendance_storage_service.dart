@@ -5,6 +5,7 @@ import '../models/attendance_status.dart';
 
 class AttendanceStorageService {
   static const String _attendanceKey = 'attendance_records';
+  static const String _activePunchInTimeKey = 'active_punch_in_time';
   static AttendanceStorageService? _instance;
   SharedPreferences? _prefs;
 
@@ -132,7 +133,11 @@ class AttendanceStorageService {
         status: AttendanceStatus.present,
       );
       
-      return await saveAttendanceRecord(record);
+      final result = await saveAttendanceRecord(record);
+      if (result) {
+        await _prefs!.setString(_activePunchInTimeKey, record.punchInTime!.toIso8601String());
+      }
+      return result;
     } catch (e) {
       print('Error punching in: $e');
       rethrow;
@@ -177,7 +182,11 @@ class AttendanceStorageService {
         status: finalStatus,
       );
       
-      return await saveAttendanceRecord(updatedRecord);
+      final result = await saveAttendanceRecord(updatedRecord);
+      if (result) {
+        await _prefs!.remove(_activePunchInTimeKey);
+      }
+      return result;
     } catch (e) {
       print('Error punching out: $e');
       rethrow;
@@ -230,6 +239,16 @@ class AttendanceStorageService {
 
   bool isPunchingAllowed(DateTime date) {
     return _isToday(date) && !_isPastDate(date);
+  }
+
+  // Get active punch in time
+  Future<DateTime?> getActivePunchInTime() async {
+    await init();
+    final punchInTimeString = _prefs!.getString(_activePunchInTimeKey);
+    if (punchInTimeString != null) {
+      return DateTime.parse(punchInTimeString);
+    }
+    return null;
   }
 }
 

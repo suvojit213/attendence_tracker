@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../models/attendance_record.dart';
@@ -20,6 +21,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   final AttendanceStorageService _storageService = AttendanceStorageService.instance;
   AttendanceRecord? _todayRecord;
   bool _isLoading = false;
+  DateTime? _punchInTime;
+  Timer? _timer;
+  String _elapsedTime = '00:00:00';
 
   late AnimationController _fadeController;
   late Animation<double> _fadeAnimation;
@@ -29,6 +33,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     super.initState();
     _initializeAnimations();
     _loadTodayRecord();
+    _loadActivePunchInTime();
   }
 
   void _initializeAnimations() {
@@ -51,7 +56,51 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   @override
   void dispose() {
     _fadeController.dispose();
+    _timer?.cancel();
     super.dispose();
+  }
+
+  Future<void> _loadActivePunchInTime() async {
+    final activePunchIn = await _storageService.getActivePunchInTime();
+    if (mounted) {
+      setState(() {
+        _punchInTime = activePunchIn;
+        if (_punchInTime != null) {
+          _startTimer();
+        } else {
+          _elapsedTime = '00:00:00';
+        }
+      });
+    }
+  }
+
+  void _startTimer() {
+    _timer?.cancel(); // Cancel any existing timer
+    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (_punchInTime != null) {
+        final duration = DateTime.now().difference(_punchInTime!);
+        if (mounted) {
+          setState(() {
+            _elapsedTime = _formatDuration(duration);
+          });
+        }
+      } else {
+        _timer?.cancel();
+        if (mounted) {
+          setState(() {
+            _elapsedTime = '00:00:00';
+          });
+        }
+      }
+    });
+  }
+
+  String _formatDuration(Duration duration) {
+    String twoDigits(int n) => n.toString().padLeft(2, '0');
+    final hours = twoDigits(duration.inHours);
+    final minutes = twoDigits(duration.inMinutes.remainder(60));
+    final seconds = twoDigits(duration.inSeconds.remainder(60));
+    return '${hours}:${minutes}:${seconds}';
   }
 
   Future<void> _loadTodayRecord() async {
@@ -95,6 +144,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       final success = await _storageService.punchIn(now, punchTime: manualTime);
       if (success && mounted) {
         await _loadTodayRecord();
+        await _loadActivePunchInTime(); // Load and start timer
         _showSuccessSnackBar('Punched in successfully! 🎉');
       }
     } catch (e) {
@@ -126,6 +176,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       final success = await _storageService.punchOut(now, punchTime: manualTime);
       if (success && mounted) {
         await _loadTodayRecord();
+        await _loadActivePunchInTime(); // Clear and stop timer
         _showSuccessSnackBar('Punched out successfully! 👋');
       }
     } catch (e) {
@@ -477,6 +528,17 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                               },
                             ),
                             const SizedBox(height: 8),
+                            if (_punchInTime != null && _todayRecord?.punchOutTime == null) ...[
+                              Text(
+                                'Elapsed: $_elapsedTime',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                            ],
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                               decoration: BoxDecoration(
@@ -510,9 +572,11 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                           Expanded(
                             child: PunchButton(
                               title: 'Punch In',
-                              subtitle: _todayRecord?.punchInTime != null
-                                  ? DateFormat('h:mm a').format(_todayRecord!.punchInTime!)
-                                  : 'Tap to Punch In',
+                              subtitle: _punchInTime != null && _todayRecord?.punchOutTime == null
+                                  ? 'Elapsed: '+ _elapsedTime
+                                  : _todayRecord?.punchInTime != null
+                                      ? DateFormat('h:mm a').format(_todayRecord!.punchInTime!)
+                                      : 'Tap to Punch In',
                               icon: Icons.login_rounded,
                               gradient: AppColors.successGradient,
                               onPressed: canPunchIn ? () => _performPunchIn() : null,

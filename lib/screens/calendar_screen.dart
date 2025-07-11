@@ -399,8 +399,31 @@ class _CalendarScreenState extends State<CalendarScreen> {
         if (record != null)
           TextButton.icon(
             onPressed: () async {
-              await _storageService.deleteAttendanceRecord(_selectedDay!);
-              _loadAttendanceRecords();
+              final bool confirmDelete = await showDialog(
+                context: context,
+                builder: (BuildContext context) {
+                  return AlertDialog(
+                    title: const Text('Confirm Deletion'),
+                    content: Text('Are you sure you want to delete the attendance record for ${DateFormat('EEEE, MMMM d, yyyy').format(_selectedDay!)}?'),
+                    actions: <Widget>[
+                      TextButton(
+                        onPressed: () => Navigator.of(context).pop(false), // User cancels
+                        child: const Text('Cancel'),
+                      ),
+                      TextButton(
+                        onPressed: () => Navigator.of(context).pop(true), // User confirms
+                        child: const Text('Delete', style: TextStyle(color: Colors.red)),
+                      ),
+                    ],
+                  );
+                },
+              ) ?? false; // Default to false if dialog is dismissed
+
+              if (confirmDelete) {
+                await _storageService.deleteAttendanceRecord(_selectedDay!);
+                _loadAttendanceRecords();
+                _showSuccessSnackBar('Attendance record deleted successfully!');
+              }
             },
             icon: const Icon(Icons.delete_outline),
             label: const Text('Delete'),

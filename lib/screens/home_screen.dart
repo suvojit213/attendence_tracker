@@ -127,7 +127,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       }
     } catch (e) {
       if (mounted) {
-        _showErrorSnackBar('Error loading today\'s record: $e');
+        _showErrorSnackBar('Error loading today's record: $e');
       }
     } finally {
         if(mounted) setState(() => _isLoading = false);
@@ -209,7 +209,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       return;
     }
 
-    if (mounted) setState(() => _isLoading = true);
+    setState(() { _isLoading = true; });
 
     try {
       final success = await _storageService.punchIn(now, punchTime: manualTime);
@@ -224,7 +224,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         _showErrorSnackBar(e.toString().replaceFirst('Exception: ', ''));
       }
     } finally {
-      if (mounted) setState(() => _isLoading = false);
+      setState(() { _isLoading = false; });
     }
   }
 
@@ -242,7 +242,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       return;
     }
     
-    if (mounted) setState(() => _isLoading = true);
+    setState(() { _isLoading = true; });
 
     try {
       final success = await _storageService.punchOut(now, punchTime: manualTime);
@@ -257,7 +257,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         _showErrorSnackBar(e.toString().replaceFirst('Exception: ', ''));
       }
     } finally {
-      if (mounted) setState(() => _isLoading = false);
+      setState(() { _isLoading = false; });
     }
   }
 
@@ -302,7 +302,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         );
 
         if(selectedDateTime.isBefore(record!.punchInTime!)) {
-           _showErrorSnackBar("Punch-out time cannot be before punch-in time.");
+           _showErrorSnackBar("Punch-out time cannot be earlier than punch-in time.");
            return;
         }
 
@@ -762,7 +762,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                                     ),
                                     const SizedBox(width: 12),
                                     Text(
-                                      'Today\'s Summary',
+                                      'Today's Summary',
                                       style: TextStyle(
                                         fontSize: 18,
                                         fontWeight: FontWeight.w700,
@@ -878,3 +878,47 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     );
   }
 
+  Widget _buildStatRow(String label, String value, Color valueColor) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceLight,
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+              color: AppColors.textSecondary,
+            ),
+          ),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+              color: valueColor,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Color _getStatusColor(AttendanceStatus status) {
+    switch (status) {
+      case AttendanceStatus.present:
+        return AppColors.success;
+      case AttendanceStatus.absent:
+        return AppColors.error;
+      case AttendanceStatus.leave:
+        return AppColors.warning;
+      case AttendanceStatus.weekOff:
+        return AppColors.calendarWeekOff;
+    }
+  }
+}

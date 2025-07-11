@@ -27,6 +27,12 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   String _elapsedTime = '00:00:00';
   double _standardWorkingHours = 9.0; // Default value
 
+  int _weeklyPresentCount = 0;
+  int _weeklyAbsentCount = 0;
+  int _weeklyLeaveCount = 0;
+  int _weeklyWeekOffCount = 0;
+  double _weeklyTotalWorkingHours = 0.0;
+
   late AnimationController _fadeController;
   late Animation<double> _fadeAnimation;
 
@@ -37,6 +43,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     _loadTodayRecord();
     _loadActivePunchInTime();
     _loadStandardWorkingHours();
+    _loadWeeklySummary();
   }
 
   void _initializeAnimations() {
@@ -136,6 +143,58 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     }
   }
 
+  Future<void> _loadWeeklySummary() async {
+    if (mounted) setState(() => _isLoading = true);
+
+    try {
+      final now = DateTime.now();
+      final startOfWeek = now.subtract(Duration(days: now.weekday - 1)); // Monday
+      final endOfWeek = startOfWeek.add(const Duration(days: 6)); // Sunday
+
+      final records = await _storageService.getAttendanceRecordsForDateRange(startOfWeek, endOfWeek);
+
+      int present = 0;
+      int absent = 0;
+      int leave = 0;
+      int weekOff = 0;
+      double totalWorkingHours = 0.0;
+
+      for (final record in records) {
+        switch (record.status) {
+          case AttendanceStatus.present:
+            present++;
+            totalWorkingHours += record.workingHours;
+            break;
+          case AttendanceStatus.absent:
+            absent++;
+            break;
+          case AttendanceStatus.leave:
+            leave++;
+            break;
+          case AttendanceStatus.weekOff:
+            weekOff++;
+            break;
+        }
+      }
+
+      if (mounted) {
+        setState(() {
+          _weeklyPresentCount = present;
+          _weeklyAbsentCount = absent;
+          _weeklyLeaveCount = leave;
+          _weeklyWeekOffCount = weekOff;
+          _weeklyTotalWorkingHours = totalWorkingHours;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        _showErrorSnackBar('Error loading weekly summary: $e');
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
   // Generic punch-in logic (automatic or manual)
   Future<void> _performPunchIn({DateTime? manualTime}) async {
     final now = DateTime.now();
@@ -157,6 +216,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       if (success && mounted) {
         await _loadTodayRecord();
         await _loadActivePunchInTime(); // Load and start timer
+        await _loadWeeklySummary(); // Refresh weekly summary
         _showSuccessSnackBar('Punched in successfully! 🎉');
       }
     } catch (e) {
@@ -189,6 +249,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       if (success && mounted) {
         await _loadTodayRecord();
         await _loadActivePunchInTime(); // Clear and stop timer
+        await _loadWeeklySummary(); // Refresh weekly summary
         _showSuccessSnackBar('Punched out successfully! 👋');
       }
     } catch (e) {
@@ -757,6 +818,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                           ),
                         ),
                       ],
+                      const SizedBox(height: 24),
+                      _buildWeeklySummary(),
                     ],
                   ),
                 ),
@@ -765,48 +828,53 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     );
   }
 
-  Widget _buildStatRow(String label, String value, Color valueColor) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: AppColors.surfaceLight,
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-              color: AppColors.textSecondary,
+  Widget _buildWeeklySummary() {
+    return Card(
+      elevation: 4,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: AppColors.secondary,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(
+                    Icons.calendar_today_rounded,
+                    color: Colors.white,
+                    size: 20,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Text(
+                  'Weekly Summary',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+              ],
             ),
-          ),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w700,
-              color: valueColor,
-            ),
-          ),
-        ],
+            const SizedBox(height: 16),
+            _buildStatRow('Present', _weeklyPresentCount.toString(), AppColors.success),
+            const SizedBox(height: 12),
+            _buildStatRow('Absent', _weeklyAbsentCount.toString(), AppColors.error),
+            const SizedBox(height: 12),
+            _buildStatRow('Leave', _weeklyLeaveCount.toString(), AppColors.warning),
+            const SizedBox(height: 12),
+            _buildStatRow('Week Off', _weeklyWeekOffCount.toString(), AppColors.calendarWeekOff),
+            const SizedBox(height: 12),
+            _buildStatRow('Total Working Hours', '${_weeklyTotalWorkingHours.toStringAsFixed(1)}h', AppColors.primary),
+          ],
+        ),
       ),
     );
   }
-
-  Color _getStatusColor(AttendanceStatus status) {
-    switch (status) {
-      case AttendanceStatus.present:
-        return AppColors.success;
-      case AttendanceStatus.absent:
-        return AppColors.error;
-      case AttendanceStatus.leave:
-        return AppColors.warning;
-      case AttendanceStatus.weekOff:
-        return AppColors.calendarWeekOff;
-    }
-  }
-}
 

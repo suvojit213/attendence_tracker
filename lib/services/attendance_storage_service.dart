@@ -115,6 +115,22 @@ class AttendanceStorageService {
     }
   }
 
+  // Get attendance records for a specific date range
+  Future<List<AttendanceRecord>> getAttendanceRecordsForDateRange(DateTime startDate, DateTime endDate) async {
+    await init();
+    try {
+      final allRecords = await getAllAttendanceRecords();
+      return allRecords.where((record) {
+        final recordDate = DateTime(record.date.year, record.date.month, record.date.day);
+        return (recordDate.isAfter(startDate.subtract(const Duration(days: 1))) &&
+                recordDate.isBefore(endDate.add(const Duration(days: 1))));
+      }).toList();
+    } catch (e) {
+      print('Error getting attendance records for date range: $e');
+      return [];
+    }
+  }
+
   // Punch in with date validation and optional manual time
   Future<bool> punchIn(DateTime date, {DateTime? punchTime}) async {
     try {

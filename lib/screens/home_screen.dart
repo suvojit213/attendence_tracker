@@ -419,7 +419,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
     final now = DateTime.now();
-    final dateFormatter = DateFormat('EEEE, MMMM d, הערב');
+    final dateFormatter = DateFormat('EEEE, MMMM d');
     final timeFormatter = DateFormat('h:mm a');
 
     // Button states

@@ -394,7 +394,7 @@ class _AttendanceSummaryCardState extends State<AttendanceSummaryCard>
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
-                            'Progress to 9 hours',
+                            'Progress to ${widget.record!.standardWorkingHours.toInt()} hours',
                             style: TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.w500,
@@ -402,7 +402,7 @@ class _AttendanceSummaryCardState extends State<AttendanceSummaryCard>
                             ),
                           ),
                           Text(
-                            '${(widget.record!.workingHours / 9 * 100).toStringAsFixed(0)}%',
+                            '${(widget.record!.workingHours / widget.record!.standardWorkingHours * 100).toStringAsFixed(0)}%',
                             style: TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.w700,
@@ -421,7 +421,7 @@ class _AttendanceSummaryCardState extends State<AttendanceSummaryCard>
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(4),
                           child: LinearProgressIndicator(
-                            value: (widget.record!.workingHours / 9).clamp(0.0, 1.0),
+                            value: (widget.record!.workingHours / widget.record!.standardWorkingHours).clamp(0.0, 1.0),
                             backgroundColor: Colors.transparent,
                             valueColor: AlwaysStoppedAnimation<Color>(
                               widget.record!.isWorkingHoursComplete 

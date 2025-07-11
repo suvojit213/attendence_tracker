@@ -9,6 +9,7 @@ import '../widgets/punch_button.dart';
 import '../widgets/attendance_summary_card.dart';
 import 'calendar_screen.dart';
 import 'about_screen.dart';
+import 'settings_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -24,6 +25,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   DateTime? _punchInTime;
   Timer? _timer;
   String _elapsedTime = '00:00:00';
+  double _standardWorkingHours = 9.0; // Default value
 
   late AnimationController _fadeController;
   late Animation<double> _fadeAnimation;
@@ -34,6 +36,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     _initializeAnimations();
     _loadTodayRecord();
     _loadActivePunchInTime();
+    _loadStandardWorkingHours();
   }
 
   void _initializeAnimations() {
@@ -121,6 +124,15 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       }
     } finally {
         if(mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _loadStandardWorkingHours() async {
+    final hours = await _storageService.getStandardWorkingHours();
+    if (mounted) {
+      setState(() {
+        _standardWorkingHours = hours;
+      });
     }
   }
 
@@ -343,7 +355,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               _buildPolicyItem(
                 Icons.access_time_rounded,
                 'Working Hours',
-                'Complete 9 hours of work to mark attendance as present.',
+                'Complete ${_standardWorkingHours.toInt()} hours of work to mark attendance as present.',
               ),
               const SizedBox(height: 16),
               _buildPolicyItem(
@@ -458,6 +470,16 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               );
             },
             tooltip: 'About',
+          ),
+          IconButton(
+            icon: const Icon(Icons.settings_rounded),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const SettingsScreen()),
+              ).then((_) => _loadStandardWorkingHours());
+            },
+            tooltip: 'Settings',
           ),
         ],
       ),
@@ -726,7 +748,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                                     !_todayRecord!.isPunchedOut) ...[
                                   _buildStatRow(
                                     'Hours Remaining',
-                                    '${(9 - _todayRecord!.workingHours).toStringAsFixed(1)}h',
+                                    '${(_standardWorkingHours - _todayRecord!.workingHours).toStringAsFixed(1)}h',
                                     AppColors.warning,
                                   ),
                                 ],

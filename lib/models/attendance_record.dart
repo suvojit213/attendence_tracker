@@ -7,6 +7,7 @@ class AttendanceRecord {
   final DateTime? punchOutTime;
   final AttendanceStatus status;
   final String? notes;
+  final double standardWorkingHours;
 
   AttendanceRecord({
     required this.date,
@@ -14,6 +15,7 @@ class AttendanceRecord {
     this.punchOutTime,
     required this.status,
     this.notes,
+    this.standardWorkingHours = 9.0, // Default to 9 hours
   });
 
   // Calculate working hours
@@ -30,9 +32,9 @@ class AttendanceRecord {
     return 0.0;
   }
 
-  // Check if working hours are complete (9 hours)
+  // Check if working hours are complete
   bool get isWorkingHoursComplete {
-    return workingHours >= 9.0;
+    return workingHours >= standardWorkingHours;
   }
 
   // Check if punch in is done
@@ -65,6 +67,7 @@ class AttendanceRecord {
       'punchOutTime': punchOutTime?.toIso8601String(),
       'status': status.value,
       'notes': notes,
+      'standardWorkingHours': standardWorkingHours,
     };
   }
 
@@ -80,6 +83,7 @@ class AttendanceRecord {
           : null,
       status: AttendanceStatusExtension.fromString(json['status']),
       notes: json['notes'],
+      standardWorkingHours: json['standardWorkingHours']?.toDouble() ?? 9.0,
     );
   }
 

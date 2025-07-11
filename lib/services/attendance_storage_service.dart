@@ -6,6 +6,7 @@ import '../models/attendance_status.dart';
 class AttendanceStorageService {
   static const String _attendanceKey = 'attendance_records';
   static const String _activePunchInTimeKey = 'active_punch_in_time';
+  static const String _standardWorkingHoursKey = 'standard_working_hours';
   static AttendanceStorageService? _instance;
   SharedPreferences? _prefs;
 
@@ -122,6 +123,7 @@ class AttendanceStorageService {
       }
 
       final existingRecord = await getAttendanceRecord(date);
+      final standardHours = await getStandardWorkingHours();
       
       if (existingRecord != null && existingRecord.isPunchedIn) {
         throw Exception('You have already punched in for today.');
@@ -131,6 +133,7 @@ class AttendanceStorageService {
         date: DateTime(date.year, date.month, date.day),
         punchInTime: punchTime ?? DateTime.now(), // Use manual time if provided
         status: AttendanceStatus.present,
+        standardWorkingHours: standardHours,
       );
       
       final result = await saveAttendanceRecord(record);
@@ -173,7 +176,7 @@ class AttendanceStorageService {
       final duration = punchOutTime.difference(existingRecord.punchInTime!); 
       final double workingHours = duration.inMinutes / 60.0;
 
-      if (workingHours < 9.0) {
+      if (workingHours < await getStandardWorkingHours()) {
         finalStatus = AttendanceStatus.absent;
       }
 
@@ -249,6 +252,18 @@ class AttendanceStorageService {
       return DateTime.parse(punchInTimeString);
     }
     return null;
+  }
+
+  // Save standard working hours
+  Future<bool> saveStandardWorkingHours(double hours) async {
+    await init();
+    return await _prefs!.setDouble(_standardWorkingHoursKey, hours);
+  }
+
+  // Get standard working hours
+  Future<double> getStandardWorkingHours() async {
+    await init();
+    return _prefs!.getDouble(_standardWorkingHoursKey) ?? 9.0; // Default to 9 hours
   }
 }
 

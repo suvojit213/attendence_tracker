@@ -31,7 +31,7 @@ class _SetupScreenState extends State<SetupScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.backgroundColor,
+      backgroundColor: AppColors.background,
       body: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24.0),
@@ -48,7 +48,7 @@ class _SetupScreenState extends State<SetupScreen> {
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
-                  color: AppColors.primaryColor,
+                  color: AppColors.primary,
                 ),
                 textAlign: TextAlign.center,
               ),
@@ -57,7 +57,7 @@ class _SetupScreenState extends State<SetupScreen> {
                 'Please enter the access code to continue.',
                 style: TextStyle(
                   fontSize: 16,
-                  color: AppColors.textColor,
+                  color: AppColors.textSecondary,
                 ),
                 textAlign: TextAlign.center,
               ),
@@ -68,21 +68,21 @@ class _SetupScreenState extends State<SetupScreen> {
                 obscureText: true,
                 decoration: InputDecoration(
                   labelText: 'Access Code',
-                  labelStyle: TextStyle(color: AppColors.accentColor),
+                  labelStyle: TextStyle(color: AppColors.primaryAccent),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12.0),
-                    borderSide: BorderSide(color: AppColors.accentColor),
+                    borderSide: BorderSide(color: AppColors.primaryAccent),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12.0),
-                    borderSide: BorderSide(color: AppColors.accentColor),
+                    borderSide: BorderSide(color: AppColors.primaryAccent),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12.0),
                     borderSide: BorderSide(color: AppColors.primaryColor, width: 2.0),
                   ),
                   errorText: _errorMessage,
-                  prefixIcon: Icon(Icons.lock, color: AppColors.accentColor),
+                  prefixIcon: Icon(Icons.lock, color: AppColors.primaryAccent),
                 ),
                 style: TextStyle(color: AppColors.textColor),
               ),

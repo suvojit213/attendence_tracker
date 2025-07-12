@@ -81,27 +81,34 @@ class _SetupScreenState extends State<SetupScreen> {
               ),
               const SizedBox(height: 24),
               ElevatedButton.icon(
-                onPressed: () async {
-                  final Uri emailLaunchUri = Uri(
-                    scheme: 'mailto',
-                    path: 'suvojitsengupta21@gmail.com',
-                    query: encodeQueryParameters(<String, String>{
-                      'subject': 'Attendance Tracker App Access Request',
-                      'body': 'Hello, I would like to request the access code for the Attendance Tracker app.'
-                    }),
-                  );
-                  if (await canLaunchUrl(emailLaunchUri)) {
-                    await launchUrl(emailLaunchUri);
-                  } else {
-                    // Fallback for when email client is not available
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Could not launch email client. Please contact suvojitsengupta21@gmail.com manually.'),
-                        backgroundColor: AppColors.error,
-                      ),
-                    );
-                  }
-                },
+                import 'package:flutter/services.dart';
+
+// ... (rest of the imports)
+
+class _SetupScreenState extends State<SetupScreen> {
+  static const platform = MethodChannel('com.example.attendance_tracker/email');
+
+  // ... (rest of the class)
+
+  Future<void> _sendEmail() async {
+    try {
+      await platform.invokeMethod('sendEmail', {
+        'to': 'suvojitsengupta21@gmail.com',
+        'subject': 'Attendance Tracker App Access Request',
+        'body': 'Hello, I would like to request the access code for the Attendance Tracker app.'
+      });
+    } on PlatformException catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Could not launch email client. Please contact suvojitsengupta21@gmail.com manually.'),
+          backgroundColor: AppColors.error,
+        ),
+      );
+    }
+  }
+
+  // ... (in the build method, replace the onPressed of the email button)
+  onPressed: _sendEmail,
                 icon: const Icon(Icons.email_rounded, color: Colors.white),
                 label: const Text('Contact Developer', style: TextStyle(color: Colors.white)),
                 style: ElevatedButton.styleFrom(

@@ -31,7 +31,6 @@ class _SetupScreenState extends State<SetupScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
       body: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24.0),
@@ -48,7 +47,7 @@ class _SetupScreenState extends State<SetupScreen> {
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
-                  color: AppColors.primary,
+                  color: Theme.of(context).primaryColor,
                 ),
                 textAlign: TextAlign.center,
               ),
@@ -57,7 +56,7 @@ class _SetupScreenState extends State<SetupScreen> {
                 'Please enter the access code to continue.',
                 style: TextStyle(
                   fontSize: 16,
-                  color: AppColors.textSecondary,
+                  color: Theme.of(context).textTheme.bodyMedium?.color,
                 ),
                 textAlign: TextAlign.center,
               ),
@@ -68,40 +67,39 @@ class _SetupScreenState extends State<SetupScreen> {
                 obscureText: true,
                 decoration: InputDecoration(
                   labelText: 'Access Code',
-                  labelStyle: TextStyle(color: AppColors.primaryAccent),
+                  labelStyle: TextStyle(color: Theme.of(context).primaryColor),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12.0),
-                    borderSide: BorderSide(color: AppColors.primaryAccent),
+                    borderSide: BorderSide(color: Theme.of(context).primaryColor),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12.0),
-                    borderSide: BorderSide(color: AppColors.primaryAccent),
+                    borderSide: BorderSide(color: Theme.of(context).primaryColor),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12.0),
-                    borderSide: BorderSide(color: AppColors.primary, width: 2.0),
+                    borderSide: BorderSide(color: Theme.of(context).primaryColor, width: 2.0),
                   ),
                   errorText: _errorMessage,
-                  prefixIcon: Icon(Icons.lock, color: AppColors.primaryAccent),
+                  prefixIcon: Icon(Icons.lock, color: Theme.of(context).primaryColor),
                 ),
-                style: TextStyle(color: AppColors.textPrimary),
+                style: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color),
               ),
               const SizedBox(height: 24.0),
               ElevatedButton(
                 onPressed: _verifyAccessCode,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
+                  backgroundColor: Theme.of(context).primaryColor,
                   padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12.0),
                   ),
                 ),
-                child: Text(
+                child: const Text(
                   'Unlock App',
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
-                    color: AppColors.background, // Text color for button
                   ),
                 ),
               ),

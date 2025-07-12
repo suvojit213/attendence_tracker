@@ -96,15 +96,8 @@ class _PunchButtonState extends State<PunchButton>
           child: Container(
             height: 130,
             decoration: BoxDecoration(
-              gradient: widget.isCompleted 
-                  ? LinearGradient(
-                      colors: [
-                        AppColors.success.withOpacity(0.8),
-                        AppColors.successDark.withOpacity(0.8)
-                      ],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    )
+              gradient: widget.isCompleted
+                  ? AppColors.successGradient
                   : isDisabled
                       ? LinearGradient(
                           colors: [
@@ -118,7 +111,7 @@ class _PunchButtonState extends State<PunchButton>
               borderRadius: BorderRadius.circular(20),
               boxShadow: [
                 BoxShadow(
-                  color: widget.isCompleted 
+                  color: widget.isCompleted
                       ? AppColors.success.withOpacity(0.3)
                       : isDisabled
                           ? Colors.grey.withOpacity(0.2)

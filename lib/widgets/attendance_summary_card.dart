@@ -68,17 +68,17 @@ class _AttendanceSummaryCardState extends State<AttendanceSummaryCard>
             position: _slideAnimation,
             child: Container(
               decoration: BoxDecoration(
-                gradient: AppColors.cardGradient,
+                color: Theme.of(context).cardColor,
                 borderRadius: BorderRadius.circular(24),
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.shadowLight,
+                    color: Theme.of(context).shadowColor.withOpacity(0.1),
                     blurRadius: 20,
                     offset: const Offset(0, 8),
                     spreadRadius: 0,
                   ),
                   BoxShadow(
-                    color: AppColors.shadowMedium,
+                    color: Theme.of(context).shadowColor.withOpacity(0.1),
                     blurRadius: 40,
                     offset: const Offset(0, 16),
                     spreadRadius: -8,
@@ -90,7 +90,7 @@ class _AttendanceSummaryCardState extends State<AttendanceSummaryCard>
                 child: Container(
                   decoration: BoxDecoration(
                     border: Border.all(
-                      color: AppColors.glassMorphismBorder,
+                      color: Theme.of(context).primaryColor.withOpacity(0.2),
                       width: 1,
                     ),
                     borderRadius: BorderRadius.circular(24),
@@ -109,8 +109,7 @@ class _AttendanceSummaryCardState extends State<AttendanceSummaryCard>
                           _buildAttendanceDetails(),
                         ],
                       ],
-                    ),
-                  ),
+                    ),                  ),
                 ),
               ),
             ),
@@ -129,7 +128,9 @@ class _AttendanceSummaryCardState extends State<AttendanceSummaryCard>
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                gradient: AppColors.primaryGradient,
+                gradient: Theme.of(context).brightness == Brightness.light
+                    ? AppColors.primaryGradient
+                    : AppColors.primaryGradientDark,
                 borderRadius: BorderRadius.circular(12),
               ),
               child: const Icon(
@@ -144,7 +145,7 @@ class _AttendanceSummaryCardState extends State<AttendanceSummaryCard>
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.w700,
-                color: AppColors.textPrimary,
+                color: Theme.of(context).textTheme.bodyLarge?.color,
                 letterSpacing: -0.5,
               ),
             ),
@@ -153,14 +154,14 @@ class _AttendanceSummaryCardState extends State<AttendanceSummaryCard>
         if (widget.onRefresh != null)
           Container(
             decoration: BoxDecoration(
-              color: AppColors.surfaceLight,
+              color: Theme.of(context).splashColor,
               borderRadius: BorderRadius.circular(12),
             ),
             child: IconButton(
               icon: const Icon(Icons.refresh_rounded),
               onPressed: widget.onRefresh,
               iconSize: 20,
-              color: AppColors.primary,
+              color: Theme.of(context).primaryColor,
               splashRadius: 20,
             ),
           ),
@@ -175,8 +176,8 @@ class _AttendanceSummaryCardState extends State<AttendanceSummaryCard>
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            AppColors.surfaceLight.withOpacity(0.5),
-            AppColors.surfaceLight.withOpacity(0.8),
+            Theme.of(context).splashColor.withOpacity(0.5),
+            Theme.of(context).splashColor.withOpacity(0.8),
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -207,7 +208,7 @@ class _AttendanceSummaryCardState extends State<AttendanceSummaryCard>
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w600,
-              color: AppColors.textPrimary,
+              color: Theme.of(context).textTheme.bodyLarge?.color,
             ),
           ),
           const SizedBox(height: 8),
@@ -215,7 +216,7 @@ class _AttendanceSummaryCardState extends State<AttendanceSummaryCard>
             'Please punch in to start tracking your attendance',
             style: TextStyle(
               fontSize: 14,
-              color: AppColors.textSecondary,
+              color: Theme.of(context).textTheme.bodyMedium?.color,
               height: 1.4,
             ),
             textAlign: TextAlign.center,
@@ -289,7 +290,7 @@ class _AttendanceSummaryCardState extends State<AttendanceSummaryCard>
                       ? timeFormatter.format(widget.record!.punchInTime!)
                       : 'Not punched in',
                   Icons.login_rounded,
-                  widget.record!.punchInTime != null ? AppColors.success : AppColors.textLight,
+                  widget.record!.punchInTime != null ? AppColors.success : Theme.of(context).textTheme.bodyMedium?.color ?? Colors.grey,
                 ),
               ),
               const SizedBox(width: 16),
@@ -300,7 +301,7 @@ class _AttendanceSummaryCardState extends State<AttendanceSummaryCard>
                       ? timeFormatter.format(widget.record!.punchOutTime!)
                       : 'Not punched out',
                   Icons.logout_rounded,
-                  widget.record!.punchOutTime != null ? AppColors.error : AppColors.textLight,
+                  widget.record!.punchOutTime != null ? AppColors.error : Theme.of(context).textTheme.bodyMedium?.color ?? Colors.grey,
                 ),
               ),
             ],
@@ -317,12 +318,12 @@ class _AttendanceSummaryCardState extends State<AttendanceSummaryCard>
                 gradient: LinearGradient(
                   colors: widget.record!.isWorkingHoursComplete 
                       ? [
-                          AppColors.successLight.withOpacity(0.8),
-                          AppColors.successLight.withOpacity(0.4),
+                          AppColors.success.withOpacity(0.1),
+                          AppColors.success.withOpacity(0.05),
                         ]
                       : [
-                          AppColors.warningLight.withOpacity(0.8),
-                          AppColors.warningLight.withOpacity(0.4),
+                          AppColors.warning.withOpacity(0.1),
+                          AppColors.warning.withOpacity(0.05),
                         ],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
@@ -330,7 +331,7 @@ class _AttendanceSummaryCardState extends State<AttendanceSummaryCard>
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
                   color: widget.record!.isWorkingHoursComplete 
-                      ? AppColors.success.withOpacity(0.3)
+                      ? AppColors.success.withOpacity(0.3) 
                       : AppColors.warning.withOpacity(0.3),
                   width: 1,
                 ),
@@ -398,7 +399,7 @@ class _AttendanceSummaryCardState extends State<AttendanceSummaryCard>
                             style: TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.w500,
-                              color: AppColors.textSecondary,
+                              color: Theme.of(context).textTheme.bodyMedium?.color,
                             ),
                           ),
                           Text(
@@ -406,7 +407,7 @@ class _AttendanceSummaryCardState extends State<AttendanceSummaryCard>
                             style: TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.w700,
-                              color: AppColors.textPrimary,
+                              color: Theme.of(context).textTheme.bodyLarge?.color,
                             ),
                           ),
                         ],
@@ -415,7 +416,7 @@ class _AttendanceSummaryCardState extends State<AttendanceSummaryCard>
                       Container(
                         height: 8,
                         decoration: BoxDecoration(
-                          color: AppColors.surfaceLight,
+                          color: Theme.of(context).splashColor,
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: ClipRRect(
@@ -448,8 +449,8 @@ class _AttendanceSummaryCardState extends State<AttendanceSummaryCard>
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            AppColors.surfaceLight.withOpacity(0.8),
-            AppColors.surfaceLight.withOpacity(0.4),
+            Theme.of(context).splashColor.withOpacity(0.8),
+            Theme.of(context).splashColor.withOpacity(0.4),
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -472,7 +473,7 @@ class _AttendanceSummaryCardState extends State<AttendanceSummaryCard>
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w500,
-                  color: AppColors.textSecondary,
+                  color: Theme.of(context).textTheme.bodyMedium?.color,
                 ),
               ),
             ],
@@ -500,20 +501,20 @@ class _AttendanceSummaryCardState extends State<AttendanceSummaryCard>
       case AttendanceStatus.leave:
         return AppColors.warning;
       case AttendanceStatus.weekOff:
-        return AppColors.calendarWeekOff;
+        return AppColors.weekOff;
     }
   }
 
   Color _getStatusBackgroundColor(AttendanceStatus status) {
     switch (status) {
       case AttendanceStatus.present:
-        return AppColors.successLight;
+        return AppColors.success.withOpacity(0.1);
       case AttendanceStatus.absent:
-        return AppColors.errorLight;
+        return AppColors.error.withOpacity(0.1);
       case AttendanceStatus.leave:
-        return AppColors.warningLight;
+        return AppColors.warning.withOpacity(0.1);
       case AttendanceStatus.weekOff:
-        return AppColors.calendarWeekOff.withOpacity(0.1);
+        return AppColors.weekOff.withOpacity(0.1);
     }
   }
 

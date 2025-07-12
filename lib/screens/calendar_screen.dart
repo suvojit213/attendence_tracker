@@ -142,7 +142,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
     
     if (record == null) {
       if (day.isAfter(DateTime.now().subtract(const Duration(days: 1)))) {
-        return AppColors.textLight;
+        return Theme.of(context).textTheme.bodyMedium?.color ?? Colors.grey;
       }
       return AppColors.error;
     }
@@ -159,11 +159,11 @@ class _CalendarScreenState extends State<CalendarScreen> {
       case AttendanceStatus.absent:
         return AppColors.error;
       case AttendanceStatus.leave:
-        return AppColors.leave;
+        return AppColors.warning;
       case AttendanceStatus.weekOff:
         return AppColors.weekOff;
       default:
-        return AppColors.textLight;
+        return Theme.of(context).textTheme.bodyMedium?.color ?? Colors.grey;
     }
   }
 
@@ -181,8 +181,6 @@ class _CalendarScreenState extends State<CalendarScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Attendance Calendar'),
-        backgroundColor: AppColors.primary,
-        foregroundColor: AppColors.white,
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -206,26 +204,26 @@ class _CalendarScreenState extends State<CalendarScreen> {
                           formatButtonVisible: false,
                           titleCentered: true,
                           titleTextStyle: TextStyle(
-                            color: AppColors.primary,
+                            color: Theme.of(context).primaryColor,
                             fontSize: 18.0,
                             fontWeight: FontWeight.bold,
                           ),
-                          leftChevronIcon: Icon(Icons.chevron_left, color: AppColors.primary),
-                          rightChevronIcon: Icon(Icons.chevron_right, color: AppColors.primary),
+                          leftChevronIcon: Icon(Icons.chevron_left, color: Theme.of(context).primaryColor),
+                          rightChevronIcon: Icon(Icons.chevron_right, color: Theme.of(context).primaryColor),
                         ),
                         calendarStyle: CalendarStyle(
                           outsideDaysVisible: false,
                           todayDecoration: BoxDecoration(
-                            color: AppColors.primary.withOpacity(0.5),
+                            color: Theme.of(context).primaryColor.withOpacity(0.5),
                             shape: BoxShape.circle,
                           ),
                           selectedDecoration: BoxDecoration(
-                            color: AppColors.primary,
+                            color: Theme.of(context).primaryColor,
                             shape: BoxShape.circle,
                           ),
-                          defaultTextStyle: TextStyle(color: AppColors.textDark),
-                          weekendTextStyle: TextStyle(color: AppColors.textDark),
-                          holidayTextStyle: TextStyle(color: AppColors.textDark),
+                          defaultTextStyle: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color),
+                          weekendTextStyle: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color),
+                          holidayTextStyle: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color),
                         ),
                         onDaySelected: _onDaySelected,
                         onPageChanged: (focusedDay) {
@@ -289,7 +287,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
           children: [
             Text(
               dateFormatter.format(_selectedDay!),
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.primary),
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Theme.of(context).primaryColor),
             ),
             const Divider(height: 20),
             if (record != null)
@@ -330,7 +328,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
   Widget _buildNoRecordInfo(bool isFutureDate) {
     return Text(
       isFutureDate ? 'This is a future date.' : 'No attendance record for this day. Considered as Absent.',
-      style: TextStyle(color: isFutureDate ? AppColors.textSecondary : AppColors.error, fontStyle: FontStyle.italic),
+      style: TextStyle(color: isFutureDate ? Theme.of(context).textTheme.bodyMedium?.color : AppColors.error, fontStyle: FontStyle.italic),
     );
   }
 
@@ -341,7 +339,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
         children: [
           Icon(icon, size: 16, color: color),
           const SizedBox(width: 8),
-          Text('$label:', style: TextStyle(color: AppColors.textSecondary)),
+          Text('$label:', style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color)),
           const Spacer(),
           Text(value, style: TextStyle(fontWeight: FontWeight.bold, color: color)),
         ],
@@ -384,7 +382,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
             },
             icon: const Icon(Icons.event_busy),
             label: const Text('Mark Leave'),
-            style: TextButton.styleFrom(foregroundColor: AppColors.leave),
+            style: TextButton.styleFrom(foregroundColor: AppColors.warning),
           ),
         if (record == null || (record.status != AttendanceStatus.leave && record.status != AttendanceStatus.weekOff))
           TextButton.icon(
@@ -427,7 +425,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
             },
             icon: const Icon(Icons.delete_outline),
             label: const Text('Delete'),
-            style: TextButton.styleFrom(foregroundColor: AppColors.textSecondary),
+            style: TextButton.styleFrom(foregroundColor: Theme.of(context).textTheme.bodyMedium?.color),
           ),
       ],
     );
@@ -442,14 +440,14 @@ class _CalendarScreenState extends State<CalendarScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'Monthly Summary',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.primary),
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Theme.of(context).primaryColor),
             ),
             const Divider(height: 20,),
             _buildStatRow('Present', _presentCount, AppColors.success),
             _buildStatRow('Absent', _absentCount, AppColors.error),
-            _buildStatRow('Leave', _leaveCount, AppColors.leave),
+            _buildStatRow('Leave', _leaveCount, AppColors.warning),
             _buildStatRow('Week Off', _weekOffCount, AppColors.weekOff),
           ],
         ),
@@ -483,7 +481,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
     switch (status) {
       case AttendanceStatus.present: return AppColors.success;
       case AttendanceStatus.absent: return AppColors.error;
-      case AttendanceStatus.leave: return AppColors.leave;
+      case AttendanceStatus.leave: return AppColors.warning;
       case AttendanceStatus.weekOff: return AppColors.weekOff;
     }
   }

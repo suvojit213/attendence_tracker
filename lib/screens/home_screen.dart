@@ -264,7 +264,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       if (mounted) {
         _showErrorSnackBar(e.toString().replaceFirst('Exception: ', ''));
       }
-    } finally {
+    }
+  } finally {
       setState(() { _isLoading = false; });
     }
   }
@@ -398,7 +399,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: AppColors.primary,
+                  color: Theme.of(context).primaryColor,
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: const Icon(
@@ -438,7 +439,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
               style: TextButton.styleFrom(
-                foregroundColor: AppColors.primary,
+                foregroundColor: Theme.of(context).primaryColor,
                 padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
               ),
               child: const Text(
@@ -459,12 +460,12 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         Container(
           padding: const EdgeInsets.all(6),
           decoration: BoxDecoration(
-            color: AppColors.primary.withOpacity(0.1),
+            color: Theme.of(context).primaryColor.withOpacity(0.1),
             borderRadius: BorderRadius.circular(8),
           ),
           child: Icon(
             icon,
-            color: AppColors.primary,
+            color: Theme.of(context).primaryColor,
             size: 16,
           ),
         ),
@@ -477,7 +478,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                 title,
                 style: TextStyle(
                   fontWeight: FontWeight.w600,
-                  color: AppColors.textPrimary,
+                  color: Theme.of(context).textTheme.bodyLarge?.color,
                   fontSize: 14,
                 ),
               ),
@@ -485,7 +486,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               Text(
                 description,
                 style: TextStyle(
-                  color: AppColors.textSecondary,
+                  color: Theme.of(context).textTheme.bodyMedium?.color,
                   fontSize: 12,
                   height: 1.4,
                 ),
@@ -508,11 +509,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     final bool canPunchOut = _todayRecord?.isPunchedIn == true && _todayRecord?.isPunchedOut != true;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
       appBar: AppBar(
         title: const Text('Attendance Tracker Pro'),
-        backgroundColor: Colors.white,
-        foregroundColor: AppColors.textPrimary,
         elevation: 0,
         actions: [
           IconButton(
@@ -543,14 +541,14 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         ],
       ),
       body: _isLoading
-          ? const Center(
+          ? Center(
               child: CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+                valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor),
               ),
             )
           : RefreshIndicator(
               onRefresh: _loadTodayRecord,
-              color: AppColors.primary,
+              color: Theme.of(context).primaryColor,
               child: SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
                 padding: const EdgeInsets.all(20),
@@ -563,11 +561,12 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                         width: double.infinity,
                         padding: const EdgeInsets.all(24),
                         decoration: BoxDecoration(
-                          color: AppColors.primary,
+                          gradient: Theme.of(context).brightness == Brightness.light
+                              ? AppColors.primaryGradient
+                              : AppColors.primaryGradientDark,
                           borderRadius: BorderRadius.circular(20),
-                          boxShadow: [
-                            BoxShadow(
-                              color: AppColors.primary.withOpacity(0.3),
+                          boxShadow: [n                            BoxShadow(
+                              color: Theme.of(context).primaryColor.withOpacity(0.3),
                               blurRadius: 15,
                               offset: const Offset(0, 5),
                             ),
@@ -686,7 +685,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                       Container(
                         padding: const EdgeInsets.symmetric(vertical: 8.0),
                         decoration: BoxDecoration(
-                          color: AppColors.surfaceLight,
+                          color: Theme.of(context).cardColor,
                           borderRadius: BorderRadius.circular(16)
                         ),
                         child: Row(
@@ -696,12 +695,12 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                               onPressed: canPunchIn ? _manualPunchIn : null, 
                               icon: Icon(
                                 Icons.edit_calendar_outlined, 
-                                color: canPunchIn ? AppColors.primary : Colors.grey,
+                                color: canPunchIn ? Theme.of(context).primaryColor : Colors.grey,
                               ), 
                               label: Text(
                                 'Manual Punch In',
                                 style: TextStyle(
-                                  color: canPunchIn ? AppColors.primary : Colors.grey,
+                                  color: canPunchIn ? Theme.of(context).primaryColor : Colors.grey,
                                   fontWeight: FontWeight.w600
                                 ),
                               )
@@ -729,7 +728,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                       if (_todayRecord != null) ...[
                         Container(
                           decoration: BoxDecoration(
-                            color: Colors.white,
+                            color: Theme.of(context).cardColor,
                             borderRadius: BorderRadius.circular(20),
                             boxShadow: [
                               BoxShadow(
@@ -749,7 +748,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                                     Container(
                                       padding: const EdgeInsets.all(8),
                                       decoration: BoxDecoration(
-                                        color: AppColors.secondary,
+                                        color: Theme.of(context).colorScheme.secondary,
                                         borderRadius: BorderRadius.circular(10),
                                       ),
                                       child: const Icon(
@@ -764,7 +763,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                                       style: TextStyle(
                                         fontSize: 18,
                                         fontWeight: FontWeight.w700,
-                                        color: AppColors.textPrimary,
+                                        color: Theme.of(context).textTheme.bodyLarge?.color,
                                       ),
                                     ),
                                   ],
@@ -840,7 +839,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: AppColors.secondary,
+                    color: Theme.of(context).colorScheme.secondary,
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: const Icon(
@@ -855,7 +854,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w700,
-                    color: AppColors.textPrimary,
+                    color: Theme.of(context).textTheme.bodyLarge?.color,
                   ),
                 ),
               ],
@@ -867,9 +866,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
             const SizedBox(height: 12),
             _buildStatRow('Leave', _weeklyLeaveCount.toString(), AppColors.warning),
             const SizedBox(height: 12),
-            _buildStatRow('Week Off', _weeklyWeekOffCount.toString(), AppColors.calendarWeekOff),
+            _buildStatRow('Week Off', _weeklyWeekOffCount.toString(), AppColors.weekOff),
             const SizedBox(height: 12),
-            _buildStatRow('Total Working Hours', '${_weeklyTotalWorkingHours.toStringAsFixed(1)}h', AppColors.primary),
+            _buildStatRow('Total Working Hours', '${_weeklyTotalWorkingHours.toStringAsFixed(1)}h', Theme.of(context).primaryColor),
           ],
         ),
       ),
@@ -880,7 +879,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: AppColors.surfaceLight,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(10),
       ),
       child: Row(
@@ -891,7 +890,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w500,
-              color: AppColors.textSecondary,
+              color: Theme.of(context).textTheme.bodyMedium?.color,
             ),
           ),
           Text(
@@ -916,7 +915,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       case AttendanceStatus.leave:
         return AppColors.warning;
       case AttendanceStatus.weekOff:
-        return AppColors.calendarWeekOff;
+        return AppColors.weekOff;
     }
   }
 }

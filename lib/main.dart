@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'screens/home_screen.dart';
 import 'screens/setup_screen.dart'; // Import the new setup screen
+import 'screens/settings_screen.dart'; // Import settings screen to access _AboutContentScreen
 import 'utils/app_colors.dart';
 
 void main() async {
@@ -273,6 +274,7 @@ class AttendanceTrackerApp extends StatelessWidget {
       routes: {
         '/setup': (context) => const SetupScreen(),
         '/home': (context) => const HomeScreen(),
+        '/settings/about': (context) => AboutContentScreen(),
       },
     );
   }

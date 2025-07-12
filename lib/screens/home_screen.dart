@@ -8,7 +8,7 @@ import '../utils/app_colors.dart';
 import '../widgets/punch_button.dart';
 import '../widgets/attendance_summary_card.dart';
 import 'calendar_screen.dart';
-import 'about_screen.dart';
+
 import 'settings_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -529,16 +529,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               ).then((_) => _loadTodayRecord());
             },
             tooltip: 'View Calendar',
-          ),
-          IconButton(
-            icon: const Icon(Icons.person_rounded),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const AboutScreen()),
-              );
-            },
-            tooltip: 'About',
           ),
           IconButton(
             icon: const Icon(Icons.settings_rounded),

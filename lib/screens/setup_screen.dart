@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../utils/app_colors.dart';
 
@@ -14,7 +13,6 @@ class _SetupScreenState extends State<SetupScreen> {
   final TextEditingController _accessCodeController = TextEditingController();
   final String _correctAccessCode = '123456';
   String? _errorMessage;
-  static const platform = MethodChannel('com.example.attendance_tracker/email');
 
   Future<void> _verifyAccessCode() async {
     if (_accessCodeController.text == _correctAccessCode) {
@@ -28,31 +26,6 @@ class _SetupScreenState extends State<SetupScreen> {
         _errorMessage = null; // Clear previous error message
       });
       _showUnauthorizedDialog();
-    }
-  }
-
-  Future<void> _sendEmail() async {
-    try {
-      final bool success = await platform.invokeMethod('sendEmail', {
-        'to': 'suvojitsengupta21@gmail.com',
-        'subject': 'Attendance Tracker App Access Request',
-        'body': 'Hello, I would like to request the access code for the Attendance Tracker app.'
-      });
-      if (!success) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('No email client found. Please contact suvojitsengupta21@gmail.com manually.'),
-            backgroundColor: AppColors.error,
-          ),
-        );
-      }
-    } on PlatformException catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error launching email client: ${e.message}. Please contact suvojitsengupta21@gmail.com manually.'),
-          backgroundColor: AppColors.error,
-        ),
-      );
     }
   }
 
@@ -106,17 +79,22 @@ class _SetupScreenState extends State<SetupScreen> {
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 24),
-              ElevatedButton.icon(
-                onPressed: _sendEmail,
-                icon: const Icon(Icons.email_rounded, color: Colors.white),
-                label: const Text('Contact Developer', style: TextStyle(color: Colors.white)),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Theme.of(context).primaryColor,
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
+              const Text(
+                'Developer: Suvojeet Sengupta',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
                 ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'Email: suvojitsengupta21@gmail.com',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                ),
+                textAlign: TextAlign.center,
               ),
               const SizedBox(height: 12),
               TextButton(
@@ -135,6 +113,8 @@ class _SetupScreenState extends State<SetupScreen> {
       },
     );
   }
+
+  
 
   @override
   Widget build(BuildContext context) {

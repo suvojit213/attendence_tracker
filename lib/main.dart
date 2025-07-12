@@ -1,14 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'screens/home_screen.dart';
+import 'screens/setup_screen.dart'; // Import the new setup screen
 import 'utils/app_colors.dart';
 
-void main() {
-  runApp(const AttendanceTrackerApp());
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  bool isSetupComplete = prefs.getBool('isSetupComplete') ?? false;
+
+  runApp(AttendanceTrackerApp(isSetupComplete: isSetupComplete));
 }
 
 class AttendanceTrackerApp extends StatelessWidget {
-  const AttendanceTrackerApp({super.key});
+  final bool isSetupComplete;
+  const AttendanceTrackerApp({super.key, required this.isSetupComplete});
 
   @override
   Widget build(BuildContext context) {
@@ -262,7 +269,11 @@ class AttendanceTrackerApp extends StatelessWidget {
         useMaterial3: true,
         visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
-      home: const HomeScreen(),
+      initialRoute: isSetupComplete ? '/home' : '/setup',
+      routes: {
+        '/setup': (context) => const SetupScreen(),
+        '/home': (context) => const HomeScreen(),
+      },
     );
   }
 }

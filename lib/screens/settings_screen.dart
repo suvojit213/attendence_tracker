@@ -1,3 +1,4 @@
+import 'package:attendance_tracker/main.dart';
 import 'package:flutter/material.dart';
 import 'package:attendance_tracker/services/attendance_storage_service.dart';
 import 'package:attendance_tracker/utils/app_colors.dart';
@@ -43,8 +44,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Settings'),
-        backgroundColor: AppColors.primary,
-        foregroundColor: Colors.white,
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -61,24 +60,22 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   children: [
                     Row(
                       children: [
-                        Icon(Icons.access_time_rounded, color: AppColors.primary),
+                        Icon(Icons.access_time_rounded, color: Theme.of(context).primaryColor),
                         const SizedBox(width: 10),
-                        Text(
+                        const Text(
                           'Standard Workday Duration',
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
-                            color: AppColors.textPrimary,
                           ),
                         ),
                       ],
                     ),
                     const SizedBox(height: 15),
-                    Text(
+                    const Text(
                       'Set the number of hours considered a full workday:',
                       style: TextStyle(
                         fontSize: 14,
-                        color: AppColors.textSecondary,
                       ),
                     ),
                     const SizedBox(height: 20),
@@ -99,8 +96,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             onChangeEnd: (newValue) {
                               _saveStandardWorkingHours(newValue);
                             },
-                            activeColor: AppColors.primary,
-                            inactiveColor: AppColors.primary.withOpacity(0.3),
                           ),
                         ),
                         Text(
@@ -108,17 +103,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
-                            color: AppColors.primary,
+                            color: Theme.of(context).primaryColor,
                           ),
                         ),
                       ],
                     ),
                     const SizedBox(height: 10),
-                    Text(
+                    const Text(
                       'Attendance will be marked as present if working hours meet or exceed this value.',
                       style: TextStyle(
                         fontSize: 12,
-                        color: AppColors.textSecondary,
                         fontStyle: FontStyle.italic,
                       ),
                     ),
@@ -131,7 +125,22 @@ class _SettingsScreenState extends State<SettingsScreen> {
               elevation: 4,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               child: ListTile(
-                leading: Icon(Icons.info_rounded, color: AppColors.primary),
+                leading: Icon(Icons.brightness_6_rounded, color: Theme.of(context).primaryColor),
+                title: const Text('Dark Mode'),
+                trailing: Switch(
+                  value: themeService.value == ThemeMode.dark,
+                  onChanged: (value) {
+                    themeService.toggleTheme(value);
+                  },
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Card(
+              elevation: 4,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              child: ListTile(
+                leading: Icon(Icons.info_rounded, color: Theme.of(context).primaryColor),
                 title: const Text('About This App'),
                 trailing: const Icon(Icons.arrow_forward_ios_rounded),
                 onTap: () {
@@ -167,7 +176,7 @@ class _AboutContentScreenState extends State<AboutContentScreen> {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: AppColors.primary,
+                  color: Theme.of(context).primaryColor,
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: const Icon(
@@ -184,10 +193,9 @@ class _AboutContentScreenState extends State<AboutContentScreen> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
+              const Text(
                 'Get in touch with the developer for support, feedback, or collaboration opportunities.',
                 style: TextStyle(
-                  color: AppColors.textSecondary,
                   fontSize: 14,
                   height: 1.4,
                 ),
@@ -216,7 +224,7 @@ class _AboutContentScreenState extends State<AboutContentScreen> {
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
               style: TextButton.styleFrom(
-                foregroundColor: AppColors.primary,
+                foregroundColor: Theme.of(context).primaryColor,
                 padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
               ),
               child: const Text(
@@ -236,12 +244,12 @@ class _AboutContentScreenState extends State<AboutContentScreen> {
         Container(
           padding: const EdgeInsets.all(6),
           decoration: BoxDecoration(
-            color: AppColors.primary.withOpacity(0.1),
+            color: Theme.of(context).primaryColor.withOpacity(0.1),
             borderRadius: BorderRadius.circular(6),
           ),
           child: Icon(
             icon,
-            color: AppColors.primary,
+            color: Theme.of(context).primaryColor,
             size: 16,
           ),
         ),
@@ -252,17 +260,15 @@ class _AboutContentScreenState extends State<AboutContentScreen> {
             children: [
               Text(
                 label,
-                style: TextStyle(
+                style: const TextStyle(
                   fontSize: 12,
-                  color: AppColors.textSecondary,
                   fontWeight: FontWeight.w500,
                 ),
               ),
               Text(
                 value,
-                style: TextStyle(
+                style: const TextStyle(
                   fontSize: 14,
-                  color: AppColors.textPrimary,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -286,9 +292,8 @@ class _AboutContentScreenState extends State<AboutContentScreen> {
           Expanded(
             child: Text(
               text,
-              style: TextStyle(
+              style: const TextStyle(
                 fontSize: 13,
-                color: AppColors.textSecondary,
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -306,17 +311,15 @@ class _AboutContentScreenState extends State<AboutContentScreen> {
         children: [
           Text(
             label,
-            style: TextStyle(
+            style: const TextStyle(
               fontSize: 14,
-              color: AppColors.textSecondary,
               fontWeight: FontWeight.w500,
             ),
           ),
           Text(
             value,
-            style: TextStyle(
+            style: const TextStyle(
               fontSize: 14,
-              color: AppColors.textPrimary,
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -328,11 +331,8 @@ class _AboutContentScreenState extends State<AboutContentScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
       appBar: AppBar(
         title: const Text('About'),
-        backgroundColor: Colors.white,
-        foregroundColor: AppColors.textPrimary,
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded),
@@ -348,11 +348,11 @@ class _AboutContentScreenState extends State<AboutContentScreen> {
             Container(
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
-                color: AppColors.primary,
+                color: Theme.of(context).primaryColor,
                 borderRadius: BorderRadius.circular(20),
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.primary.withOpacity(0.3),
+                    color: Theme.of(context).primaryColor.withOpacity(0.3),
                     blurRadius: 15,
                     offset: const Offset(0, 5),
                   ),
@@ -409,7 +409,7 @@ class _AboutContentScreenState extends State<AboutContentScreen> {
               width: double.infinity,
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: Theme.of(context).cardColor,
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
@@ -437,32 +437,29 @@ class _AboutContentScreenState extends State<AboutContentScreen> {
                         ),
                       ),
                       const SizedBox(width: 12),
-                      Text(
+                      const Text(
                         'App Motive',
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.w700,
-                          color: AppColors.textPrimary,
                         ),
                       ),
                     ],
                   ),
                   const SizedBox(height: 12),
-                  Text(
+                  const Text(
                     'Attendance Tracker Pro is designed to simplify and modernize attendance management for individuals and organizations. Our mission is to provide a secure, user-friendly, and efficient solution that helps users track their work hours accurately while maintaining data privacy.',
                     style: TextStyle(
                       fontSize: 14,
-                      color: AppColors.textSecondary,
                       height: 1.5,
                     ),
                   ),
                   const SizedBox(height: 12),
-                  Text(
+                  const Text(
                     'Key Features:',
                     style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w600,
-                      color: AppColors.textPrimary,
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -482,7 +479,7 @@ class _AboutContentScreenState extends State<AboutContentScreen> {
               width: double.infinity,
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: Theme.of(context).cardColor,
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
@@ -500,7 +497,7 @@ class _AboutContentScreenState extends State<AboutContentScreen> {
                       Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: AppColors.secondary,
+                          color: AppColors.secondaryLight,
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: const Icon(
@@ -510,12 +507,11 @@ class _AboutContentScreenState extends State<AboutContentScreen> {
                         ),
                       ),
                       const SizedBox(width: 12),
-                      Text(
+                      const Text(
                         'Developer',
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.w700,
-                          color: AppColors.textPrimary,
                         ),
                       ),
                     ],
@@ -529,7 +525,7 @@ class _AboutContentScreenState extends State<AboutContentScreen> {
                         width: 60,
                         height: 60,
                         decoration: BoxDecoration(
-                          color: AppColors.primary,
+                          color: Theme.of(context).primaryColor,
                           borderRadius: BorderRadius.circular(15),
                         ),
                         child: const Icon(
@@ -539,7 +535,7 @@ class _AboutContentScreenState extends State<AboutContentScreen> {
                         ),
                       ),
                       const SizedBox(width: 16),
-                      Expanded(
+                      const Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -548,24 +544,21 @@ class _AboutContentScreenState extends State<AboutContentScreen> {
                               style: TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.w700,
-                                color: AppColors.textPrimary,
                               ),
                             ),
-                            const SizedBox(height: 4),
+                            SizedBox(height: 4),
                             Text(
                               'Flutter Developer',
                               style: TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w500,
-                                color: AppColors.primary,
                               ),
                             ),
-                            const SizedBox(height: 6),
+                            SizedBox(height: 6),
                             Text(
                               'Passionate about creating beautiful and functional mobile applications.',
                               style: TextStyle(
                                 fontSize: 12,
-                                color: AppColors.textSecondary,
                                 height: 1.3,
                               ),
                             ),
@@ -585,7 +578,6 @@ class _AboutContentScreenState extends State<AboutContentScreen> {
                       icon: const Icon(Icons.contact_mail_rounded, size: 20),
                       label: const Text('Contact Developer'),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 12),
                         shape: RoundedRectangleBorder(
@@ -606,7 +598,7 @@ class _AboutContentScreenState extends State<AboutContentScreen> {
               width: double.infinity,
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: Theme.of(context).cardColor,
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
@@ -634,12 +626,11 @@ class _AboutContentScreenState extends State<AboutContentScreen> {
                         ),
                       ),
                       const SizedBox(width: 12),
-                      Text(
+                      const Text(
                         'App Information',
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.w700,
-                          color: AppColors.textPrimary,
                         ),
                       ),
                     ],
@@ -657,11 +648,10 @@ class _AboutContentScreenState extends State<AboutContentScreen> {
             const SizedBox(height: 24),
             
             // Simplified Footer
-            Text(
+            const Text(
               '© 2025 Suvojeet Sengupta. All rights reserved.',
               style: TextStyle(
                 fontSize: 12,
-                color: AppColors.textLight,
                 fontWeight: FontWeight.w500,
               ),
               textAlign: TextAlign.center,
@@ -669,11 +659,10 @@ class _AboutContentScreenState extends State<AboutContentScreen> {
             
             const SizedBox(height: 6),
             
-            Text(
+            const Text(
               'Made with ❤️ using Flutter',
               style: TextStyle(
                 fontSize: 12,
-                color: AppColors.textLight,
                 fontWeight: FontWeight.w500,
               ),
               textAlign: TextAlign.center,

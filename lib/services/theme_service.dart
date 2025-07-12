@@ -14,7 +14,7 @@ class ThemeService extends ValueNotifier<ThemeMode> {
     } else if (theme == 'dark') {
       value = ThemeMode.dark;
     } else {
-      value = ThemeMode.system;
+      value = ThemeMode.light; // Default to light mode if no preference is saved
     }
   }
 

@@ -79,18 +79,18 @@ class _SetupScreenState extends State<SetupScreen> {
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12.0),
-                    borderSide: BorderSide(color: AppColors.primaryColor, width: 2.0),
+                    borderSide: BorderSide(color: AppColors.primary, width: 2.0),
                   ),
                   errorText: _errorMessage,
                   prefixIcon: Icon(Icons.lock, color: AppColors.primaryAccent),
                 ),
-                style: TextStyle(color: AppColors.textColor),
+                style: TextStyle(color: AppColors.textPrimary),
               ),
               const SizedBox(height: 24.0),
               ElevatedButton(
                 onPressed: _verifyAccessCode,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primaryColor,
+                  backgroundColor: AppColors.primary,
                   padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12.0),
@@ -101,7 +101,7 @@ class _SetupScreenState extends State<SetupScreen> {
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
-                    color: AppColors.backgroundColor, // Text color for button
+                    color: AppColors.background, // Text color for button
                   ),
                 ),
               ),

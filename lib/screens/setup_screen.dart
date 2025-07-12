@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:url_launcher/url_launcher.dart';
 import '../utils/app_colors.dart';
 
 class SetupScreen extends StatefulWidget {
@@ -14,6 +14,7 @@ class _SetupScreenState extends State<SetupScreen> {
   final TextEditingController _accessCodeController = TextEditingController();
   final String _correctAccessCode = '123456';
   String? _errorMessage;
+  static const platform = MethodChannel('com.example.attendance_tracker/email');
 
   Future<void> _verifyAccessCode() async {
     if (_accessCodeController.text == _correctAccessCode) {
@@ -27,6 +28,23 @@ class _SetupScreenState extends State<SetupScreen> {
         _errorMessage = null; // Clear previous error message
       });
       _showUnauthorizedDialog();
+    }
+  }
+
+  Future<void> _sendEmail() async {
+    try {
+      await platform.invokeMethod('sendEmail', {
+        'to': 'suvojitsengupta21@gmail.com',
+        'subject': 'Attendance Tracker App Access Request',
+        'body': 'Hello, I would like to request the access code for the Attendance Tracker app.'
+      });
+    } on PlatformException catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Could not launch email client. Please contact suvojitsengupta21@gmail.com manually.'),
+          backgroundColor: AppColors.error,
+        ),
+      );
     }
   }
 
@@ -81,34 +99,7 @@ class _SetupScreenState extends State<SetupScreen> {
               ),
               const SizedBox(height: 24),
               ElevatedButton.icon(
-                import 'package:flutter/services.dart';
-
-// ... (rest of the imports)
-
-class _SetupScreenState extends State<SetupScreen> {
-  static const platform = MethodChannel('com.example.attendance_tracker/email');
-
-  // ... (rest of the class)
-
-  Future<void> _sendEmail() async {
-    try {
-      await platform.invokeMethod('sendEmail', {
-        'to': 'suvojitsengupta21@gmail.com',
-        'subject': 'Attendance Tracker App Access Request',
-        'body': 'Hello, I would like to request the access code for the Attendance Tracker app.'
-      });
-    } on PlatformException catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Could not launch email client. Please contact suvojitsengupta21@gmail.com manually.'),
-          backgroundColor: AppColors.error,
-        ),
-      );
-    }
-  }
-
-  // ... (in the build method, replace the onPressed of the email button)
-  onPressed: _sendEmail,
+                onPressed: _sendEmail,
                 icon: const Icon(Icons.email_rounded, color: Colors.white),
                 label: const Text('Contact Developer', style: TextStyle(color: Colors.white)),
                 style: ElevatedButton.styleFrom(
@@ -135,12 +126,6 @@ class _SetupScreenState extends State<SetupScreen> {
         );
       },
     );
-  }
-
-  String? encodeQueryParameters(Map<String, String> params) {
-    return params.entries
-        .map((e) => '${Uri.encodeComponent(e.key)}=${Uri.encodeComponent(e.value)}')
-        .join('&');
   }
 
   @override

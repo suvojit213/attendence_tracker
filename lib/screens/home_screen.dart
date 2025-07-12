@@ -8,7 +8,6 @@ import '../utils/app_colors.dart';
 import '../widgets/punch_button.dart';
 import '../widgets/attendance_summary_card.dart';
 import 'calendar_screen.dart';
-
 import 'settings_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -129,7 +128,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       }
     } catch (e) {
       if (mounted) {
-        _showErrorSnackBar('Error loading today\'s record: $e');
+        _showErrorSnackBar('Error loading today's record: $e');
       }
     } finally {
         if(mounted) setState(() {
@@ -203,7 +202,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     }
   }
 
-  // Generic punch-in logic (automatic or manual)
   Future<void> _performPunchIn({DateTime? manualTime}) async {
     final now = DateTime.now();
     
@@ -223,8 +221,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       final success = await _storageService.punchIn(now, punchTime: manualTime);
       if (success && mounted) {
         await _loadTodayRecord();
-        await _loadActivePunchInTime(); // Load and start timer
-        await _loadWeeklySummary(); // Refresh weekly summary
+        await _loadActivePunchInTime();
+        await _loadWeeklySummary();
         _showSuccessSnackBar('Punched in successfully! 🎉');
       }
     } catch (e) {
@@ -236,7 +234,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     }
   }
 
-  // Generic punch-out logic (automatic or manual)
   Future<void> _performPunchOut({DateTime? manualTime}) async {
     final now = DateTime.now();
     
@@ -256,21 +253,19 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       final success = await _storageService.punchOut(now, punchTime: manualTime);
       if (success && mounted) {
         await _loadTodayRecord();
-        await _loadActivePunchInTime(); // Clear and stop timer
-        await _loadWeeklySummary(); // Refresh weekly summary
+        await _loadActivePunchInTime();
+        await _loadWeeklySummary();
         _showSuccessSnackBar('Punched out successfully! 👋');
       }
     } catch (e) {
       if (mounted) {
         _showErrorSnackBar(e.toString().replaceFirst('Exception: ', ''));
       }
-    }
-  } finally {
+    } finally {
       setState(() { _isLoading = false; });
     }
   }
 
-  // Show time picker for manual punch-in
   Future<void> _manualPunchIn() async {
     final now = DateTime.now();
     final selectedTime = await showTimePicker(
@@ -288,7 +283,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     }
   }
 
-  // Show time picker for manual punch-out
   Future<void> _manualPunchOut() async {
     final now = DateTime.now();
     final record = await _storageService.getAttendanceRecord(now);
@@ -318,7 +312,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         await _performPunchOut(manualTime: selectedDateTime);
     }
   }
-
 
   void _showSuccessSnackBar(String message) {
     if (!mounted) return;
@@ -504,7 +497,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     final dateFormatter = DateFormat('EEEE, MMMM d');
     final timeFormatter = DateFormat('h:mm a');
 
-    // Button states
     final bool canPunchIn = _todayRecord?.isPunchedIn != true;
     final bool canPunchOut = _todayRecord?.isPunchedIn == true && _todayRecord?.isPunchedOut != true;
 
@@ -565,7 +557,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                               ? AppColors.primaryGradient
                               : AppColors.primaryGradientDark,
                           borderRadius: BorderRadius.circular(20),
-                          boxShadow: [n                            BoxShadow(
+                          boxShadow: [
+                            BoxShadow(
                               color: Theme.of(context).primaryColor.withOpacity(0.3),
                               blurRadius: 15,
                               offset: const Offset(0, 5),
@@ -653,7 +646,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                             child: PunchButton(
                               title: 'Punch In',
                               subtitle: _punchInTime != null && _todayRecord?.punchOutTime == null
-                                  ? 'Elapsed: '+ _elapsedTime
+                                  ? 'Elapsed: $_elapsedTime'
                                   : _todayRecord?.punchInTime != null
                                       ? DateFormat('h:mm a').format(_todayRecord!.punchInTime!)
                                       : 'Tap to Punch In',
@@ -681,7 +674,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                       
                       const SizedBox(height: 16),
 
-                      // Manual Punch Buttons
                       Container(
                         padding: const EdgeInsets.symmetric(vertical: 8.0),
                         decoration: BoxDecoration(

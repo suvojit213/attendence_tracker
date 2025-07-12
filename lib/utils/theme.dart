@@ -68,7 +68,7 @@ class AppThemes {
         ),
       ),
     ),
-    cardTheme: CardTheme(
+    cardTheme: CardThemeData(
       elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(24),
@@ -158,7 +158,7 @@ class AppThemes {
       behavior: SnackBarBehavior.floating,
       elevation: 8,
     ),
-    dialogTheme: DialogTheme(
+    dialogTheme: DialogThemeData(
       backgroundColor: AppColors.cardBackgroundLight,
       elevation: 24,
       shape: RoundedRectangleBorder(
@@ -299,7 +299,7 @@ class AppThemes {
         ),
       ),
     ),
-    cardTheme: CardTheme(
+    cardTheme: CardThemeData(
       elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(24),
@@ -372,7 +372,7 @@ class AppThemes {
       ),
       hintStyle: TextStyle(
         fontFamily: 'Poppins',
-        color: AppColors.textLight,
+        color: AppColors.textLightDark,
         fontWeight: FontWeight.w400,
       ),
     ),
@@ -389,7 +389,7 @@ class AppThemes {
       behavior: SnackBarBehavior.floating,
       elevation: 8,
     ),
-    dialogTheme: DialogTheme(
+    dialogTheme: DialogThemeData(
       backgroundColor: AppColors.cardBackgroundDark,
       elevation: 24,
       shape: RoundedRectangleBorder(
@@ -440,7 +440,7 @@ class AppThemes {
         if (states.contains(WidgetState.selected)) {
           return Colors.white;
         }
-        return AppColors.textLight;
+        return AppColors.textLightDark;
       }),
       trackColor: WidgetStateProperty.resolveWith((states) {
         if (states.contains(WidgetState.selected)) {

@@ -9,6 +9,7 @@ class AppColors {
   static const Color textPrimaryLight = Color(0xFF1E293B);
   static const Color textSecondaryLight = Color(0xFF64748B);
   static const Color surfaceLight = Color(0xFFF1F5F9);
+  static const Color textLight = Color(0xFF94A3B8); // Common light text for hints/disabled
 
   // Dark Theme Colors
   static const Color primaryDark = Color(0xFF818CF8);
@@ -18,6 +19,7 @@ class AppColors {
   static const Color textPrimaryDark = Color(0xFFF8FAFC);
   static const Color textSecondaryDark = Color(0xFF94A3B8);
   static const Color surfaceDark = Color(0xFF334155);
+  static const Color textLightDark = Color(0xFF64748B); // Common light text for hints/disabled in dark mode
 
   // Common Colors
   static const Color success = Color(0xFF10B981);
@@ -50,5 +52,3 @@ class AppColors {
     end: Alignment.bottomRight,
   );
 }
-
-

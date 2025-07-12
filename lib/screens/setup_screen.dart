@@ -33,15 +33,23 @@ class _SetupScreenState extends State<SetupScreen> {
 
   Future<void> _sendEmail() async {
     try {
-      await platform.invokeMethod('sendEmail', {
+      final bool success = await platform.invokeMethod('sendEmail', {
         'to': 'suvojitsengupta21@gmail.com',
         'subject': 'Attendance Tracker App Access Request',
         'body': 'Hello, I would like to request the access code for the Attendance Tracker app.'
       });
+      if (!success) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('No email client found. Please contact suvojitsengupta21@gmail.com manually.'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
     } on PlatformException catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Could not launch email client. Please contact suvojitsengupta21@gmail.com manually.'),
+          content: Text('Error launching email client: ${e.message}. Please contact suvojitsengupta21@gmail.com manually.'),
           backgroundColor: AppColors.error,
         ),
       );

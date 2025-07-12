@@ -18,8 +18,8 @@ class MainActivity : FlutterActivity() {
                 val subject = call.argument<String>("subject")
                 val body = call.argument<String>("body")
                 if (to != null && subject != null && body != null) {
-                    sendEmail(to, subject, body)
-                    result.success(null)
+                    val success = sendEmail(to, subject, body)
+                    result.success(success)
                 } else {
                     result.error("UNAVAILABLE", "Email details not provided.", null)
                 }
@@ -29,17 +29,18 @@ class MainActivity : FlutterActivity() {
         }
     }
 
-    private fun sendEmail(to: String, subject: String, body: String) {
+    private fun sendEmail(to: String, subject: String, body: String): Boolean {
         val intent = Intent(Intent.ACTION_SENDTO).apply {
             data = Uri.parse("mailto:")
             putExtra(Intent.EXTRA_EMAIL, arrayOf(to))
             putExtra(Intent.EXTRA_SUBJECT, subject)
             putExtra(Intent.EXTRA_TEXT, body)
         }
-        if (intent.resolveActivity(packageManager) != null) {
+        return if (intent.resolveActivity(packageManager) != null) {
             startActivity(intent)
+            true
         } else {
-            // Optionally, handle the case where no email client is installed
+            false
         }
     }
 }

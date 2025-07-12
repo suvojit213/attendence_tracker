@@ -128,7 +128,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       }
     } catch (e) {
       if (mounted) {
-        _showErrorSnackBar('Error loading today's record: $e');
+        _showErrorSnackBar("Error loading today's record: $e");
       }
     } finally {
         if(mounted) setState(() {

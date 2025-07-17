@@ -41,7 +41,7 @@ android {
     signingConfigs {
         create("release") {
             val keystoreProperties = Properties()
-            val keystorePropertiesFile = rootProject.file("android/key.properties")
+            val keystorePropertiesFile = file("../key.properties")
             if (!keystorePropertiesFile.exists()) {
                 throw GradleException("key.properties file not found at ${keystorePropertiesFile.absolutePath}")
             }

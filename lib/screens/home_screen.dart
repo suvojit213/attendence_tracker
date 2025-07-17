@@ -6,7 +6,6 @@ import '../models/attendance_status.dart';
 import '../services/attendance_storage_service.dart';
 import '../utils/app_colors.dart';
 import '../widgets/punch_button.dart';
-import '../widgets/attendance_summary_card.dart';
 import 'calendar_screen.dart';
 import 'settings_screen.dart';
 
@@ -568,25 +567,35 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
+                            // Status Indicator
                             Row(
                               children: [
-                                const Icon(
-                                  Icons.today_rounded,
+                                Icon(
+                                  _todayRecord?.isPunchedIn == true && _todayRecord?.isPunchedOut != true
+                                      ? Icons.timer_rounded // Punched In
+                                      : _todayRecord?.isPunchedOut == true
+                                          ? Icons.check_circle_rounded // Punched Out
+                                          : Icons.circle_outlined, // Not Punched In
                                   color: Colors.white,
-                                  size: 20,
+                                  size: 24,
                                 ),
                                 const SizedBox(width: 12),
                                 Text(
-                                  dateFormatter.format(now),
+                                  _todayRecord?.isPunchedIn == true && _todayRecord?.isPunchedOut != true
+                                      ? 'Punched In'
+                                      : _todayRecord?.isPunchedOut == true
+                                          ? 'Punched Out'
+                                          : 'Not Punched In',
                                   style: const TextStyle(
                                     color: Colors.white,
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w600,
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.w700,
                                   ),
                                 ),
                               ],
                             ),
-                            const SizedBox(height: 12),
+                            const SizedBox(height: 16),
+                            // Current Time
                             StreamBuilder(
                               stream: Stream.periodic(const Duration(seconds: 1)),
                               builder: (context, snapshot) {
@@ -594,24 +603,53 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                                   timeFormatter.format(DateTime.now()),
                                   style: const TextStyle(
                                     color: Colors.white,
-                                    fontSize: 32,
-                                    fontWeight: FontWeight.w700,
+                                    fontSize: 38,
+                                    fontWeight: FontWeight.w800,
                                   ),
                                 );
                               },
                             ),
                             const SizedBox(height: 8),
+                            // Current Date
+                            Text(
+                              dateFormatter.format(now),
+                              style: const TextStyle(
+                                color: Colors.white70,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            // Elapsed Time (if punched in)
                             if (_punchInTime != null && _todayRecord?.punchOutTime == null) ...[
                               Text(
                                 'Elapsed: $_elapsedTime',
                                 style: const TextStyle(
                                   color: Colors.white,
-                                  fontSize: 20,
+                                  fontSize: 22,
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
-                              const SizedBox(height: 8),
+                              const SizedBox(height: 16),
                             ],
+                            // Working Hours Progress Bar
+                            Text(
+                              'Working Hours: ${_todayRecord?.formattedWorkingHours ?? '0h 0m'} / ${_standardWorkingHours.toStringAsFixed(1)}h',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            LinearProgressIndicator(
+                              value: (_todayRecord?.workingHours ?? 0.0) / _standardWorkingHours,
+                              backgroundColor: Colors.white.withOpacity(0.3),
+                              valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
+                              minHeight: 8,
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            const SizedBox(height: 16),
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                               decoration: BoxDecoration(
@@ -633,40 +671,37 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                       
                       const SizedBox(height: 24),
                       
-                      AttendanceSummaryCard(
-                        record: _todayRecord,
-                        onRefresh: _loadTodayRecord,
-                      ),
-                      
-                      const SizedBox(height: 24),
-                      
                       Row(
                         children: [
                           Expanded(
-                            child: PunchButton(
-                              title: 'Punch In',
-                              subtitle: _punchInTime != null && _todayRecord?.punchOutTime == null
-                                  ? 'Elapsed: $_elapsedTime'
-                                  : _todayRecord?.punchInTime != null
-                                      ? DateFormat('h:mm a').format(_todayRecord!.punchInTime!)
-                                      : 'Tap to Punch In',
-                              icon: Icons.login_rounded,
-                              gradient: AppColors.successGradient,
+                            child: ElevatedButton.icon(
                               onPressed: canPunchIn ? () => _performPunchIn() : null,
-                              isCompleted: !canPunchIn,
+                              icon: const Icon(Icons.login_rounded),
+                              label: const Text('Punch In'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.success,
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(vertical: 16),
+                                textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                                elevation: 8,
+                              ),
                             ),
                           ),
                           const SizedBox(width: 16),
                           Expanded(
-                            child: PunchButton(
-                              title: 'Punch Out',
-                              subtitle: _todayRecord?.punchOutTime != null
-                                  ? DateFormat('h:mm a').format(_todayRecord!.punchOutTime!)
-                                  : 'Tap to Punch Out',
-                              icon: Icons.logout_rounded,
-                              gradient: AppColors.errorGradient,
+                            child: ElevatedButton.icon(
                               onPressed: canPunchOut ? () => _performPunchOut() : null,
-                              isCompleted: _todayRecord?.isPunchedOut == true,
+                              icon: const Icon(Icons.logout_rounded),
+                              label: const Text('Punch Out'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.error,
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(vertical: 16),
+                                textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                                elevation: 8,
+                              ),
                             ),
                           ),
                         ],
@@ -818,6 +853,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   }
 
   Widget _buildWeeklySummary() {
+    final totalDays = _weeklyPresentCount + _weeklyAbsentCount + _weeklyLeaveCount + _weeklyWeekOffCount;
     return Card(
       elevation: 4,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
@@ -852,18 +888,55 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               ],
             ),
             const SizedBox(height: 16),
-            _buildStatRow('Present', _weeklyPresentCount.toString(), AppColors.success),
+            _buildProgressStatRow('Present', _weeklyPresentCount, totalDays, AppColors.success),
             const SizedBox(height: 12),
-            _buildStatRow('Absent', _weeklyAbsentCount.toString(), AppColors.error),
+            _buildProgressStatRow('Absent', _weeklyAbsentCount, totalDays, AppColors.error),
             const SizedBox(height: 12),
-            _buildStatRow('Leave', _weeklyLeaveCount.toString(), AppColors.warning),
+            _buildProgressStatRow('Leave', _weeklyLeaveCount, totalDays, AppColors.warning),
             const SizedBox(height: 12),
-            _buildStatRow('Week Off', _weeklyWeekOffCount.toString(), AppColors.weekOff),
+            _buildProgressStatRow('Week Off', _weeklyWeekOffCount, totalDays, AppColors.weekOff),
             const SizedBox(height: 12),
             _buildStatRow('Total Working Hours', '${_weeklyTotalWorkingHours.toStringAsFixed(1)}h', Theme.of(context).primaryColor),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildProgressStatRow(String label, int count, int total, Color color) {
+    final percentage = total > 0 ? count / total : 0.0;
+    return Column(
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                color: Theme.of(context).textTheme.bodyMedium?.color,
+              ),
+            ),
+            Text(
+              '${count} (${(percentage * 100).toStringAsFixed(0)}%)',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
+                color: color,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 4),
+        LinearProgressIndicator(
+          value: percentage,
+          backgroundColor: color.withOpacity(0.2),
+          valueColor: AlwaysStoppedAnimation<Color>(color),
+          minHeight: 6,
+          borderRadius: BorderRadius.circular(3),
+        ),
+      ],
     );
   }
 

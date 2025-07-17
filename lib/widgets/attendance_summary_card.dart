@@ -204,7 +204,7 @@ class _AttendanceSummaryCardState extends State<AttendanceSummaryCard>
           ),
           const SizedBox(height: 16),
           Text(
-            'No attendance record for today',
+            'No Attendance Record',
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w600,
@@ -213,7 +213,7 @@ class _AttendanceSummaryCardState extends State<AttendanceSummaryCard>
           ),
           const SizedBox(height: 8),
           Text(
-            'Please punch in to start tracking your attendance',
+            'Punch in to start tracking your attendance for today.',
             style: TextStyle(
               fontSize: 14,
               color: Theme.of(context).textTheme.bodyMedium?.color,

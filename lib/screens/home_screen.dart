@@ -120,9 +120,23 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       await _storageService.init(); // Ensure service is initialized
       final today = DateTime.now();
       final record = await _storageService.getAttendanceRecord(today);
+      final activePunchIn = await _storageService.getActivePunchInTime();
+
       if (mounted) {
         setState(() {
-          _todayRecord = record;
+          if (record != null) {
+            _todayRecord = record;
+          } else if (activePunchIn != null) {
+            // If no record for today but there's an active punch-in, create a temporary record
+            _todayRecord = AttendanceRecord(
+              date: today,
+              punchInTime: activePunchIn,
+              status: AttendanceStatus.present,
+              standardWorkingHours: _standardWorkingHours,
+            );
+          } else {
+            _todayRecord = null;
+          }
         });
       }
     } catch (e) {
@@ -633,21 +647,45 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                               const SizedBox(height: 16),
                             ],
                             // Working Hours Progress Bar
-                            Text(
-                              'Working Hours: ${_todayRecord?.formattedWorkingHours ?? '0h 0m'} / ${_standardWorkingHours.toStringAsFixed(1)}h',
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 14,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            LinearProgressIndicator(
-                              value: (_todayRecord?.workingHours ?? 0.0) / _standardWorkingHours,
-                              backgroundColor: Colors.white.withOpacity(0.3),
-                              valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
-                              minHeight: 8,
-                              borderRadius: BorderRadius.circular(4),
+                            // Working Hours Progress Bar
+                            Builder(
+                              builder: (context) {
+                                double currentWorkingHours = 0.0;
+                                String formattedCurrentWorkingHours = '0h 0m';
+
+                                if (_punchInTime != null && _todayRecord?.punchOutTime == null) {
+                                  final duration = DateTime.now().difference(_punchInTime!);
+                                  currentWorkingHours = duration.inMinutes / 60.0;
+                                  final hours = currentWorkingHours.floor();
+                                  final minutes = ((currentWorkingHours - hours) * 60).round();
+                                  formattedCurrentWorkingHours = '${hours}h ${minutes}m';
+                                } else if (_todayRecord != null) {
+                                  currentWorkingHours = _todayRecord!.workingHours;
+                                  formattedCurrentWorkingHours = _todayRecord!.formattedWorkingHours;
+                                }
+
+                                return Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Working Hours: $formattedCurrentWorkingHours / ${_standardWorkingHours.toStringAsFixed(1)}h',
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    LinearProgressIndicator(
+                                      value: currentWorkingHours / _standardWorkingHours,
+                                      backgroundColor: Colors.white.withOpacity(0.3),
+                                      valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
+                                      minHeight: 8,
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
+                                  ],
+                                );
+                              },
                             ),
                             const SizedBox(height: 16),
                             Container(

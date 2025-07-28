@@ -5,7 +5,7 @@ import 'package:attendance_tracker/screens/reports_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'screens/home_screen.dart';
-import 'package:attendance_tracker/services/auth_service.dart'; // Import your AuthService
+import 'package:attendance_tracker/services/auth_service.dart'; // Import your new AuthService
 
 final themeService = ThemeService();
 
@@ -33,20 +33,11 @@ class _AttendanceTrackerAppState extends State<AttendanceTrackerApp> {
   }
 
   Future<void> _checkBiometrics() async {
-    bool canAuthenticate = await _authService.canAuthenticate();
-    if (canAuthenticate) {
-      bool authenticated = await _authService.authenticate();
-      setState(() {
-        _isAuthenticated = authenticated;
-        _isLoading = false;
-      });
-    } else {
-      // If biometrics are not available or not set up, allow access
-      setState(() {
-        _isAuthenticated = true;
-        _isLoading = false;
-      });
-    }
+    bool authenticated = await _authService.authenticate();
+    setState(() {
+      _isAuthenticated = authenticated;
+      _isLoading = false;
+    });
   }
 
   @override

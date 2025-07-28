@@ -1,23 +1,14 @@
-import 'package:local_auth/local_auth.dart';
+import 'package:flutter/services.dart';
 
 class AuthService {
-  final LocalAuthentication _localAuth = LocalAuthentication();
-
-  Future<bool> canAuthenticate() async {
-    return await _localAuth.canCheckBiometrics || await _localAuth.isDeviceSupported();
-  }
+  static const MethodChannel _channel = MethodChannel('com.example.attendance_tracker/biometric');
 
   Future<bool> authenticate() async {
     try {
-      return await _localAuth.authenticate(
-        localizedReason: 'Please authenticate to access the app',
-        options: const AuthenticationOptions(
-          stickyAuth: true,
-          biometricOnly: true,
-        ),
-      );
-    } catch (e) {
-      print(e); // You might want to log this error
+      final bool result = await _channel.invokeMethod('authenticate');
+      return result;
+    } on PlatformException catch (e) {
+      print("Failed to authenticate: '${e.message}');
       return false;
     }
   }

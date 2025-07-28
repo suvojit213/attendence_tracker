@@ -14,12 +14,24 @@ import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
 
+import androidx.biometric.BiometricPrompt
+import androidx.biometric.BiometricManager
+import java.util.concurrent.Executor
+import java.util.concurrent.Executors
+
 class MainActivity : FlutterActivity() {
-    private val CHANNEL = "com.example.attendance_tracker/reports"
+    private val REPORTS_CHANNEL = "com.example.attendance_tracker/reports"
+    private val BIOMETRIC_CHANNEL = "com.example.attendance_tracker/biometric"
+
+    private lateinit var executor: Executor
+    private lateinit var biometricPrompt: BiometricPrompt
+    private lateinit var promptInfo: BiometricPrompt.PromptInfo
 
     override fun configureFlutterEngine(@NonNull flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
-        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, CHANNEL).setMethodCallHandler {
+
+        // Reports Method Channel
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, REPORTS_CHANNEL).setMethodCallHandler {
             call, result ->
             if (call.method == "saveFileToDocuments") {
                 val fileName = call.argument<String>("fileName")
@@ -36,6 +48,66 @@ class MainActivity : FlutterActivity() {
                 }
             } else {
                 result.notImplemented()
+            }
+        }
+
+        // Biometric Method Channel
+        executor = Executors.newSingleThreadExecutor()
+
+        promptInfo = BiometricPrompt.PromptInfo.Builder()
+            .setTitle("Biometric login for Attendance Tracker")
+            .setSubtitle("Log in using your biometric credential")
+            .setNegativeButtonText("Use account password")
+            .build()
+
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, BIOMETRIC_CHANNEL).setMethodCallHandler {
+            call, result ->
+            when (call.method) {
+                "authenticate" -> {
+                    authenticateWithBiometrics(result)
+                }
+                else -> {
+                    result.notImplemented()
+                }
+            }
+        }
+    }
+
+    private fun authenticateWithBiometrics(result: MethodChannel.Result) {
+        val biometricManager = BiometricManager.from(this)
+        when (biometricManager.canAuthenticate(BiometricManager.Authenticators.BIOMETRIC_STRONG or BiometricManager.Authenticators.DEVICE_CREDENTIAL)) {
+            BiometricManager.BIOMETRIC_SUCCESS -> {
+                // App can authenticate using biometrics
+                biometricPrompt = BiometricPrompt(this, executor, object : BiometricPrompt.AuthenticationCallback() {
+                    override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
+                        super.onAuthenticationError(errorCode, errString)
+                        result.success(false) // Authentication failed
+                    }
+
+                    override fun onAuthenticationSucceeded(authResult: BiometricPrompt.AuthenticationResult) {
+                        super.onAuthenticationSucceeded(authResult)
+                        result.success(true) // Authentication succeeded
+                    }
+
+                    override fun onAuthenticationFailed() {
+                        super.onAuthenticationFailed()
+                        // This is called when a biometric is recognized but not accepted.
+                        // The prompt remains open, so we don't send a result yet.
+                    }
+                })
+                biometricPrompt.authenticate(promptInfo)
+            }
+            BiometricManager.BIOMETRIC_ERROR_NO_HARDWARE -> {
+                result.success(false) // No biometric features on this device
+            }
+            BiometricManager.BIOMETRIC_ERROR_HW_UNAVAILABLE -> {
+                result.success(false) // Biometric features are currently unavailable
+            }
+            BiometricManager.BIOMETRIC_ERROR_NONE_ENROLLED -> {
+                result.success(false) // No biometrics enrolled
+            }
+            else -> {
+                result.success(false) // Other errors
             }
         }
     }

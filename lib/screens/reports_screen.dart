@@ -10,6 +10,8 @@ import 'package:flutter/services.dart'; // Import for MethodChannel
 import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
+import 'package:attendance_tracker/screens/pdf_viewer_screen.dart'; // Import for PDF Viewer
+import 'package:attendance_tracker/screens/csv_viewer_screen.dart'; // Import for CSV Viewer
 
 class ReportsScreen extends StatefulWidget {
   const ReportsScreen({super.key});
@@ -56,10 +58,15 @@ class _ReportsScreenState extends State<ReportsScreen> {
     }
   }
 
-  Future<void> _generatePdfReport() async {
+  Future<Uint8List> _generatePdfBytes() async {
     final records = await _storageService.getAttendanceRecordsForMonth(
         _selectedYear, _selectedMonth);
     final pdf = pw.Document();
+
+    // Load app icon for branding
+    final ByteData bytes = await rootBundle.load('assets/images/attendance_tracker_icon.png');
+    final Uint8List iconBytes = bytes.buffer.asUint8List();
+    final pw.MemoryImage appIcon = pw.MemoryImage(iconBytes);
 
     pdf.addPage(
       pw.MultiPage(
@@ -68,11 +75,18 @@ class _ReportsScreenState extends State<ReportsScreen> {
           return [
             pw.Header(
               level: 0,
-              child: pw.Text(
-                  'Attendance Report - ${getMonthName(_selectedMonth)} $_selectedYear',
-                  style: pw.TextStyle(
-                      fontSize: 24, fontWeight: pw.FontWeight.bold)),
+              child: pw.Row(
+                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                children: [
+                  pw.Text(
+                      'Attendance Report - ${getMonthName(_selectedMonth)} $_selectedYear',
+                      style: pw.TextStyle(
+                          fontSize: 20, fontWeight: pw.FontWeight.bold)),
+                  pw.Image(appIcon, width: 40, height: 40),
+                ],
+              ),
             ),
+            pw.SizedBox(height: 20),
             pw.Table.fromTextArray(
               context: context,
               data: <List<String>>[
@@ -90,10 +104,29 @@ class _ReportsScreenState extends State<ReportsScreen> {
         },
       ),
     );
+    return pdf.save();
+  }
 
+  Future<void> _generatePdfReport() async {
+    final pdfBytes = await _generatePdfBytes();
     final fileName = 'attendance_report_${_selectedYear}_${_selectedMonth}.pdf';
-    final pdfBytes = await pdf.save();
     await _saveFileNative(fileName, Uint8List.fromList(pdfBytes));
+  }
+
+  Future<void> _viewPdfReport() async {
+    final pdfBytes = await _generatePdfBytes();
+    final output = await getTemporaryDirectory();
+    final file = File('${output.path}/temp_attendance_report.pdf');
+    await file.writeAsBytes(pdfBytes);
+
+    if (mounted) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => PdfViewerScreen(pdfPath: file.path),
+        ),
+      );
+    }
   }
 
   Future<void> _generateCsvReport() async {
@@ -206,13 +239,53 @@ class _ReportsScreenState extends State<ReportsScreen> {
             ),
             const SizedBox(height: 20),
             ElevatedButton.icon(
+              onPressed: _viewPdfReport,
+              icon: const Icon(Icons.remove_red_eye_rounded),
+              label: const Text('View PDF'),
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton.icon(
               onPressed: _generateCsvReport,
               icon: const Icon(Icons.table_chart),
               label: const Text('Download as CSV'),
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton.icon(
+              onPressed: _viewCsvReport,
+              icon: const Icon(Icons.remove_red_eye_rounded),
+              label: const Text('View CSV'),
             ),
           ],
         ),
       ),
     );
+  }
+
+  Future<void> _viewCsvReport() async {
+    final records = await _storageService.getAttendanceRecordsForMonth(
+        _selectedYear, _selectedMonth);
+    final List<List<dynamic>> rows = [];
+
+    rows.add(['Date', 'Status', 'Punch In', 'Punch Out', 'Working Hours']);
+    for (var record in records) {
+      rows.add([
+        record.date.toIso8601String().substring(0, 10),
+        record.status.displayName,
+        record.punchInTime?.toIso8601String() ?? 'N/A',
+        record.punchOutTime?.toIso8601String() ?? 'N/A',
+        record.formattedWorkingHours,
+      ]);
+    }
+
+    final String csv = const ListToCsvConverter().convert(rows);
+
+    if (mounted) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => CsvViewerScreen(csvContent: csv, title: 'Attendance Report - ${getMonthName(_selectedMonth)} $_selectedYear'),
+        ),
+      );
+    }
   }
 }

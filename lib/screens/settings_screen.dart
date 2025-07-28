@@ -42,11 +42,26 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   Future<void> _launchUPI() async {
     final uri = Uri.parse('upi://pay?pa=suvojeetsengupta2.wallet@phonepe&pn=Suvojeet%20Sengupta&cu=INR');
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri);
-    } else {
-      // Handle error: could not launch UPI app
-      debugPrint('Could not launch UPI app');
+    try {
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri);
+      } else {
+        debugPrint('DEBUG: canLaunchUrl returned false for UPI URI: $uri');
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Could not launch UPI app. Please ensure a UPI app is installed.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      debugPrint('DEBUG: Error launching UPI URI: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error launching UPI app: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 

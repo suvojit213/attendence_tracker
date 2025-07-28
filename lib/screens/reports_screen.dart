@@ -1,10 +1,12 @@
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:attendance_tracker/models/attendance_record.dart';
 import 'package:attendance_tracker/models/attendance_status.dart';
 import 'package:attendance_tracker/services/attendance_storage_service.dart';
 import 'package:csv/csv.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart'; // Import for MethodChannel
 import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
@@ -17,6 +19,8 @@ class ReportsScreen extends StatefulWidget {
 }
 
 class _ReportsScreenState extends State<ReportsScreen> {
+  static const platform = MethodChannel('com.example.attendance_tracker/reports');
+
   final AttendanceStorageService _storageService =
       AttendanceStorageService.instance;
 
@@ -26,6 +30,30 @@ class _ReportsScreenState extends State<ReportsScreen> {
   @override
   void initState() {
     super.initState();
+  }
+
+  Future<void> _saveFileNative(String fileName, Uint8List fileBytes) async {
+    try {
+      final String? result = await platform.invokeMethod(
+        'saveFileToDocuments',
+        {'fileName': fileName, 'fileBytes': fileBytes},
+      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Report saved to: $result'),
+          ),
+        );
+      }
+    } on PlatformException catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to save report: ${e.message}'),
+          ),
+        );
+      }
+    }
   }
 
   Future<void> _generatePdfReport() async {
@@ -63,15 +91,9 @@ class _ReportsScreenState extends State<ReportsScreen> {
       ),
     );
 
-    final output = await getDownloadsDirectory();
-    final file = File(
-        '${output?.path}/attendance_report_${_selectedYear}_${_selectedMonth}.pdf');
-    await file.writeAsBytes(await pdf.save());
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('PDF report saved to ${file.path}'),
-      ),
-    );
+    final fileName = 'attendance_report_${_selectedYear}_${_selectedMonth}.pdf';
+    final pdfBytes = await pdf.save();
+    await _saveFileNative(fileName, Uint8List.fromList(pdfBytes));
   }
 
   Future<void> _generateCsvReport() async {
@@ -91,15 +113,8 @@ class _ReportsScreenState extends State<ReportsScreen> {
     }
 
     final String csv = const ListToCsvConverter().convert(rows);
-    final output = await getDownloadsDirectory();
-    final file = File(
-        '${output?.path}/attendance_report_${_selectedYear}_${_selectedMonth}.csv');
-    await file.writeAsString(csv);
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('CSV report saved to ${file.path}'),
-      ),
-    );
+    final fileName = 'attendance_report_${_selectedYear}_${_selectedMonth}.csv';
+    await _saveFileNative(fileName, Uint8List.fromList(csv.codeUnits));
   }
 
   String getMonthName(int month) {

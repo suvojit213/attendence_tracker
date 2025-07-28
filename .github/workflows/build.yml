@@ -63,6 +63,13 @@ jobs:
       - name: 🔄 Get Dependencies
         run: flutter pub get
 
+      - name: ✨ [AUTO-COMMIT] Commit pubspec.lock changes
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "ci: Auto-commit pubspec.lock changes"
+          branch: main
+          file_pattern: 'pubspec.lock' # Only commit changes to this file
+
       - name: Decode Keystore
         run: |
           echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > ${{ github.workspace }}/android/app/keystore.jks

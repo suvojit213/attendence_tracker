@@ -21,6 +21,7 @@ android {
     dependencies {
     //... other dependencies
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")
+    implementation("androidx.biometric:biometric:1.1.0")
 }
 
     kotlinOptions {

@@ -504,6 +504,32 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     );
   }
 
+  int _selectedIndex = 0;
+
+  void _onItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+
+    switch (index) {
+      case 0:
+        // Already on the home screen
+        break;
+      case 1:
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const CalendarScreen()),
+        ).then((_) {
+          _loadTodayRecord();
+          // Reset index to home when returning
+          setState(() {
+            _selectedIndex = 0;
+          });
+        });
+        break;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final now = DateTime.now();
@@ -522,16 +548,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
             icon: const Icon(Icons.info_outline_rounded),
             onPressed: _showInfoDialog,
             tooltip: 'Attendance Policy',
-          ),
-          IconButton(
-            icon: const Icon(Icons.calendar_month_rounded),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const CalendarScreen()),
-              ).then((_) => _loadTodayRecord());
-            },
-            tooltip: 'View Calendar',
           ),
           IconButton(
             icon: const Icon(Icons.settings_rounded),
@@ -887,6 +903,46 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                 ),
               ),
             ),
+      bottomNavigationBar: Container(
+        margin: const EdgeInsets.all(20),
+        height: 70,
+        decoration: BoxDecoration(
+          color: Theme.of(context).cardColor,
+          borderRadius: BorderRadius.circular(35),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 15,
+              offset: const Offset(0, 5),
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            IconButton(
+              icon: Icon(
+                Icons.home_rounded,
+                color: _selectedIndex == 0
+                    ? Theme.of(context).primaryColor
+                    : Colors.grey,
+              ),
+              onPressed: () => _onItemTapped(0),
+              tooltip: 'Home',
+            ),
+            IconButton(
+              icon: Icon(
+                Icons.calendar_month_rounded,
+                color: _selectedIndex == 1
+                    ? Theme.of(context).primaryColor
+                    : Colors.grey,
+              ),
+              onPressed: () => _onItemTapped(1),
+              tooltip: 'Calendar',
+            ),
+          ],
+        ),
+      ),
     );
   }
 

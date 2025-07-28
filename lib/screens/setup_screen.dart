@@ -14,20 +14,6 @@ class _SetupScreenState extends State<SetupScreen> {
   final String _correctAccessCode = '123456';
   String? _errorMessage;
 
-  @override
-  void initState() {
-    super.initState();
-    _checkSetupStatus();
-  }
-
-  Future<void> _checkSetupStatus() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    bool isSetupComplete = prefs.getBool('isSetupComplete') ?? false;
-    if (isSetupComplete) {
-      Navigator.of(context).pushReplacementNamed('/home');
-    }
-  }
-
   Future<void> _verifyAccessCode() async {
     if (_accessCodeController.text == _correctAccessCode) {
       SharedPreferences prefs = await SharedPreferences.getInstance();

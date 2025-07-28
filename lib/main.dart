@@ -14,11 +14,12 @@ void main() async {
   SharedPreferences prefs = await SharedPreferences.getInstance();
   bool isSetupComplete = prefs.getBool('isSetupComplete') ?? false;
 
-  runApp(const AttendanceTrackerApp());
+  runApp(AttendanceTrackerApp(isSetupComplete: isSetupComplete));
 }
 
 class AttendanceTrackerApp extends StatelessWidget {
-  const AttendanceTrackerApp({super.key});
+  final bool isSetupComplete;
+  const AttendanceTrackerApp({super.key, required this.isSetupComplete});
 
   @override
   Widget build(BuildContext context) {
@@ -31,7 +32,7 @@ class AttendanceTrackerApp extends StatelessWidget {
           theme: AppThemes.lightTheme,
           darkTheme: AppThemes.darkTheme,
           themeMode: themeMode,
-          initialRoute: '/setup',
+          initialRoute: isSetupComplete ? '/home' : '/setup',
           routes: {
             '/setup': (context) => const SetupScreen(),
             '/home': (context) => const HomeScreen(),

@@ -483,7 +483,7 @@ class _AboutScreenState extends State<AboutScreen> {
                   ),
                   const SizedBox(height: 16),
                   _buildInfoRow('Version', '1.0.1'),
-                  _buildInfoRow('Build', '2025.06.29'),
+                  _buildInfoRow('Build', '2025.07.28'),
                   _buildInfoRow('Platform', 'Flutter'),
                   _buildInfoRow('License', 'MIT License'),
                   _buildInfoRow('Privacy', 'Data stored locally'),

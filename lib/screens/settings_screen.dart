@@ -173,7 +173,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     ),
                     const SizedBox(height: 15),
                     const Text(
-                      'This app takes time and resources to build and maintain. If you find it useful and wish to support its continuous improvement, you can donate:',
+                      'Developing an application of this quality typically costs around ₹10,000-₹15,000 INR. However, I am providing this app to you completely free of charge.',
+                      style: TextStyle(
+                        fontSize: 14,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    const Text(
+                      'If you find it useful and wish to support its continuous improvement, you can donate:',
                       style: TextStyle(
                         fontSize: 14,
                       ),

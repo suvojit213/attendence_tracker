@@ -5,6 +5,7 @@ import 'package:attendance_tracker/screens/reports_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'screens/home_screen.dart';
+import 'package:attendance_tracker/services/donation_service.dart';
 
 final themeService = ThemeService();
 
@@ -21,6 +22,16 @@ class AttendanceTrackerApp extends StatefulWidget {
 }
 
 class _AttendanceTrackerAppState extends State<AttendanceTrackerApp> {
+  @override
+  void initState() {
+    super.initState();
+    _checkDonationPopup();
+  }
+
+  void _checkDonationPopup() async {
+    await DonationService().showDonationPopupIfNeeded(context);
+  }
+
   @override
   Widget build(BuildContext context) {
     return ValueListenableBuilder<ThemeMode>(

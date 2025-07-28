@@ -1,4 +1,4 @@
-package com.example.attendance_tracker
+package com.suvojeet.attendance_tracker
 
 import android.content.ContentValues
 import android.content.Context
@@ -20,8 +20,8 @@ import java.util.concurrent.Executor
 import java.util.concurrent.Executors
 
 class MainActivity : FlutterActivity() {
-    private val REPORTS_CHANNEL = "com.example.attendance_tracker/reports"
-    private val BIOMETRIC_CHANNEL = "com.example.attendance_tracker/biometric"
+    private val REPORTS_CHANNEL = "com.suvojeet.attendance_tracker/reports"
+    private val BIOMETRIC_CHANNEL = "com.suvojeet.attendance_tracker/biometric"
 
     private lateinit var executor: Executor
     private lateinit var biometricPrompt: BiometricPrompt

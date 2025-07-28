@@ -21,7 +21,7 @@ class ReportsScreen extends StatefulWidget {
 }
 
 class _ReportsScreenState extends State<ReportsScreen> {
-  static const platform = MethodChannel('com.example.attendance_tracker/reports');
+  static const platform = MethodChannel('com.suvojeet.attendance_tracker/reports');
 
   final AttendanceStorageService _storageService =
       AttendanceStorageService.instance;

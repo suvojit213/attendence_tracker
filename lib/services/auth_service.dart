@@ -1,7 +1,7 @@
 import 'package:flutter/services.dart';
 
 class AuthService {
-  static const MethodChannel _channel = MethodChannel('com.example.attendance_tracker/biometric');
+  static const MethodChannel _channel = MethodChannel('com.suvojeet.attendance_tracker/biometric');
 
   Future<bool> authenticate() async {
     try {

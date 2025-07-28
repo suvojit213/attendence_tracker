@@ -1,6 +1,7 @@
 import 'package:attendance_tracker/main.dart';
 import 'package:flutter/material.dart';
 import 'package:attendance_tracker/services/attendance_storage_service.dart';
+import 'package:attendance_tracker/services/update_service.dart';
 import 'package:attendance_tracker/utils/app_colors.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -187,7 +188,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
                       content: Text('Checking for updates...'),
-                      backgroundColor: AppColors.primaryColor,
+                      backgroundColor: AppColors.primaryLight,
                     ),
                   );
                   final updateInfo = await UpdateService.checkForUpdate();
@@ -214,7 +215,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   const SnackBar(
                                     content: Text('Downloading update...'),
-                                    backgroundColor: AppColors.primaryColor,
+                                    backgroundColor: AppColors.primaryLight,
                                   ),
                                 );
                               },

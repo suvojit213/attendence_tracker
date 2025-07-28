@@ -20,8 +20,17 @@ class _ReportsScreenState extends State<ReportsScreen> {
   final AttendanceStorageService _storageService =
       AttendanceStorageService.instance;
 
+  int _selectedMonth = DateTime.now().month;
+  int _selectedYear = DateTime.now().year;
+
+  @override
+  void initState() {
+    super.initState();
+  }
+
   Future<void> _generatePdfReport() async {
-    final records = await _storageService.getAllAttendanceRecords();
+    final records = await _storageService.getAttendanceRecordsForMonth(
+        _selectedYear, _selectedMonth);
     final pdf = pw.Document();
 
     pdf.addPage(
@@ -31,7 +40,8 @@ class _ReportsScreenState extends State<ReportsScreen> {
           return [
             pw.Header(
               level: 0,
-              child: pw.Text('Attendance Report',
+              child: pw.Text(
+                  'Attendance Report - ${getMonthName(_selectedMonth)} $_selectedYear',
                   style: pw.TextStyle(
                       fontSize: 24, fontWeight: pw.FontWeight.bold)),
             ),
@@ -54,7 +64,8 @@ class _ReportsScreenState extends State<ReportsScreen> {
     );
 
     final output = await getDownloadsDirectory();
-    final file = File('${output?.path}/attendance_report.pdf');
+    final file = File(
+        '${output?.path}/attendance_report_${_selectedYear}_${_selectedMonth}.pdf');
     await file.writeAsBytes(await pdf.save());
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -64,7 +75,8 @@ class _ReportsScreenState extends State<ReportsScreen> {
   }
 
   Future<void> _generateCsvReport() async {
-    final records = await _storageService.getAllAttendanceRecords();
+    final records = await _storageService.getAttendanceRecordsForMonth(
+        _selectedYear, _selectedMonth);
     final List<List<dynamic>> rows = [];
 
     rows.add(['Date', 'Status', 'Punch In', 'Punch Out', 'Working Hours']);
@@ -80,13 +92,45 @@ class _ReportsScreenState extends State<ReportsScreen> {
 
     final String csv = const ListToCsvConverter().convert(rows);
     final output = await getDownloadsDirectory();
-    final file = File('${output?.path}/attendance_report.csv');
+    final file = File(
+        '${output?.path}/attendance_report_${_selectedYear}_${_selectedMonth}.csv');
     await file.writeAsString(csv);
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text('CSV report saved to ${file.path}'),
       ),
     );
+  }
+
+  String getMonthName(int month) {
+    switch (month) {
+      case 1:
+        return 'January';
+      case 2:
+        return 'February';
+      case 3:
+        return 'March';
+      case 4:
+        return 'April';
+      case 5:
+        return 'May';
+      case 6:
+        return 'June';
+      case 7:
+        return 'July';
+      case 8:
+        return 'August';
+      case 9:
+        return 'September';
+      case 10:
+        return 'October';
+      case 11:
+        return 'November';
+      case 12:
+        return 'December';
+      default:
+        return '';
+    }
   }
 
   @override
@@ -99,6 +143,47 @@ class _ReportsScreenState extends State<ReportsScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                DropdownButton<int>(
+                  value: _selectedMonth,
+                  onChanged: (int? newValue) {
+                    if (newValue != null) {
+                      setState(() {
+                        _selectedMonth = newValue;
+                      });
+                    }
+                  },
+                  items: List.generate(12, (index) => index + 1)
+                      .map<DropdownMenuItem<int>>((int value) {
+                    return DropdownMenuItem<int>(
+                      value: value,
+                      child: Text(getMonthName(value)),
+                    );
+                  }).toList(),
+                ),
+                const SizedBox(width: 20),
+                DropdownButton<int>(
+                  value: _selectedYear,
+                  onChanged: (int? newValue) {
+                    if (newValue != null) {
+                      setState(() {
+                        _selectedYear = newValue;
+                      });
+                    }
+                  },
+                  items: List.generate(5, (index) => DateTime.now().year - 2 + index)
+                      .map<DropdownMenuItem<int>>((int value) {
+                    return DropdownMenuItem<int>(
+                      value: value,
+                      child: Text(value.toString()),
+                    );
+                  }).toList(),
+                ),
+              ],
+            ),
+            const SizedBox(height: 40),
             ElevatedButton.icon(
               onPressed: _generatePdfReport,
               icon: const Icon(Icons.picture_as_pdf),

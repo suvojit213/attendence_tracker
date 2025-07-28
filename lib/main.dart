@@ -4,6 +4,7 @@ import 'package:attendance_tracker/utils/theme.dart';
 import 'package:attendance_tracker/screens/reports_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'screens/home_screen.dart';
 import 'package:attendance_tracker/services/auth_service.dart'; // Import your new AuthService
 
@@ -25,19 +26,44 @@ class _AttendanceTrackerAppState extends State<AttendanceTrackerApp> {
   final AuthService _authService = AuthService();
   bool _isAuthenticated = false;
   bool _isLoading = true;
+  bool _isFirstLaunch = true;
 
   @override
   void initState() {
     super.initState();
-    _checkBiometrics();
+    _initializeAuth();
   }
 
-  Future<void> _checkBiometrics() async {
-    bool authenticated = await _authService.authenticate();
-    setState(() {
-      _isAuthenticated = authenticated;
-      _isLoading = false;
-    });
+  Future<void> _initializeAuth() async {
+    final prefs = await SharedPreferences.getInstance();
+    _isFirstLaunch = prefs.getBool('first_launch') ?? true;
+
+    if (_isFirstLaunch) {
+      // Attempt to authenticate for the first time setup
+      bool authenticated = await _authService.authenticate();
+      if (authenticated) {
+        await prefs.setBool('first_launch', false);
+        setState(() {
+          _isAuthenticated = true;
+          _isLoading = false;
+          _isFirstLaunch = false;
+        });
+      } else {
+        // If first-time authentication fails, keep _isFirstLaunch true
+        // and show the authentication required message.
+        setState(() {
+          _isAuthenticated = false;
+          _isLoading = false;
+        });
+      }
+    } else {
+      // Regular authentication for subsequent launches
+      bool authenticated = await _authService.authenticate();
+      setState(() {
+        _isAuthenticated = authenticated;
+        _isLoading = false;
+      });
+    }
   }
 
   @override
@@ -53,11 +79,34 @@ class _AttendanceTrackerAppState extends State<AttendanceTrackerApp> {
     }
 
     if (!_isAuthenticated) {
-      // You might want to show an error screen or a fallback login here
-      return const MaterialApp(
+      return MaterialApp(
         home: Scaffold(
           body: Center(
-            child: Text('Authentication Required to use the app.'),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Text('Authentication Required to use the app.'),
+                if (_isFirstLaunch)
+                  Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: ElevatedButton(
+                      onPressed: () async {
+                        // Retry authentication for first-time setup
+                        bool authenticated = await _authService.authenticate();
+                        if (authenticated) {
+                          final prefs = await SharedPreferences.getInstance();
+                          await prefs.setBool('first_launch', false);
+                          setState(() {
+                            _isAuthenticated = true;
+                            _isFirstLaunch = false;
+                          });
+                        }
+                      },
+                      child: const Text('Set up Biometrics/Password'),
+                    ),
+                  ),
+              ],
+            ),
           ),
         ),
       );

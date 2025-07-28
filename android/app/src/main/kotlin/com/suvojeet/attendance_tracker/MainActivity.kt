@@ -13,9 +13,18 @@ import io.flutter.plugin.common.MethodChannel
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
+import android.content.Intent
+import androidx.core.content.FileProvider
+import android.app.DownloadManager
+import android.content.BroadcastReceiver
+import android.content.IntentFilter
+import android.content.pm.PackageManager
+import android.provider.Settings
+import android.widget.Toast
 
 class MainActivity : FlutterActivity() {
     private val REPORTS_CHANNEL = "com.suvojeet.attendance_tracker/reports"
+    private val UPDATE_CHANNEL = "com.suvojeet.attendance_tracker/updater"
 
     override fun configureFlutterEngine(@NonNull flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
@@ -35,6 +44,22 @@ class MainActivity : FlutterActivity() {
                     }
                 } else {
                     result.error("INVALID_ARGUMENTS", "File name or bytes are missing", null)
+                }
+            } else {
+                result.notImplemented()
+            }
+        }
+
+        // Update Method Channel
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, UPDATE_CHANNEL).setMethodCallHandler {
+            call, result ->
+            if (call.method == "downloadAndInstall") {
+                val url = call.argument<String>("url")
+                if (url != null) {
+                    AppUpdater(this).downloadAndInstall(url)
+                    result.success(null)
+                } else {
+                    result.error("INVALID_ARGUMENTS", "Download URL is missing", null)
                 }
             } else {
                 result.notImplemented()

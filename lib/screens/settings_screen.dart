@@ -179,6 +179,65 @@ class _SettingsScreenState extends State<SettingsScreen> {
             Card(
               elevation: 4,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              child: ListTile(
+                leading: Icon(Icons.system_update_alt_rounded, color: Theme.of(context).primaryColor),
+                title: const Text('Check for Updates'),
+                trailing: const Icon(Icons.arrow_forward_ios_rounded),
+                onTap: () async {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Checking for updates...'),
+                      backgroundColor: AppColors.primaryColor,
+                    ),
+                  );
+                  final updateInfo = await UpdateService.checkForUpdate();
+                  if (updateInfo != null) {
+                    // Show dialog to user about new update
+                    showDialog(
+                      context: context,
+                      builder: (BuildContext context) {
+                        return AlertDialog(
+                          title: const Text('New Update Available'),
+                          content: Text('Version ${updateInfo['newVersion']} is available. Do you want to download and install it?'),
+                          actions: <Widget>[
+                            TextButton(
+                              child: const Text('Later'),
+                              onPressed: () {
+                                Navigator.of(context).pop();
+                              },
+                            ),
+                            TextButton(
+                              child: const Text('Update Now'),
+                              onPressed: () {
+                                Navigator.of(context).pop();
+                                UpdateService.downloadAndInstallUpdate(updateInfo['downloadUrl']);
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Downloading update...'),
+                                    backgroundColor: AppColors.primaryColor,
+                                  ),
+                                );
+                              },
+                            ),
+                          ],
+                        );
+                      },
+                    );
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('No updates available.'),
+                        backgroundColor: AppColors.success,
+                      ),
+                    );
+                  }
+                },
+              ),
+            ),
+            const SizedBox(height: 16),
+            Card(
+              elevation: 4,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: Column(

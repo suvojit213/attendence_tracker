@@ -13,6 +13,7 @@ import io.flutter.plugin.common.MethodChannel
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
+import android.util.Log
 
 import androidx.biometric.BiometricPrompt
 import androidx.biometric.BiometricManager
@@ -78,36 +79,43 @@ class MainActivity : FlutterActivity() {
         val biometricManager = BiometricManager.from(this)
         when (biometricManager.canAuthenticate(BiometricManager.Authenticators.BIOMETRIC_STRONG or BiometricManager.Authenticators.DEVICE_CREDENTIAL)) {
             BiometricManager.BIOMETRIC_SUCCESS -> {
+                Log.d("BiometricAuth", "BIOMETRIC_SUCCESS: Device can authenticate with biometrics.")
                 // App can authenticate using biometrics
                 biometricPrompt = BiometricPrompt(this as FragmentActivity, executor, object : BiometricPrompt.AuthenticationCallback() {
                     override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
                         super.onAuthenticationError(errorCode, errString)
+                        Log.e("BiometricAuth", "Authentication error: $errorCode - $errString")
                         result.success(false) // Authentication failed
                     }
 
                     override fun onAuthenticationSucceeded(authResult: BiometricPrompt.AuthenticationResult) {
                         super.onAuthenticationSucceeded(authResult)
+                        Log.d("BiometricAuth", "Authentication succeeded.")
                         result.success(true) // Authentication succeeded
                     }
 
                     override fun onAuthenticationFailed() {
                         super.onAuthenticationFailed()
-                        // This is called when a biometric is recognized but not accepted.
-                        // The prompt remains open, so we don't send a result yet.
+                        Log.d("BiometricAuth", "Authentication failed: Biometric recognized but not accepted.")
+                        result.success(false) // Authentication failed
                     }
                 })
                 biometricPrompt.authenticate(promptInfo)
             }
             BiometricManager.BIOMETRIC_ERROR_NO_HARDWARE -> {
+                Log.e("BiometricAuth", "BIOMETRIC_ERROR_NO_HARDWARE: No biometric features on this device.")
                 result.success(false) // No biometric features on this device
             }
             BiometricManager.BIOMETRIC_ERROR_HW_UNAVAILABLE -> {
+                Log.e("BiometricAuth", "BIOMETRIC_ERROR_HW_UNAVAILABLE: Biometric features are currently unavailable.")
                 result.success(false) // Biometric features are currently unavailable
             }
             BiometricManager.BIOMETRIC_ERROR_NONE_ENROLLED -> {
-                result.success(false) // No biometrics enrolled
+                Log.e("BiometricAuth", "BIOMETRIC_ERROR_NONE_ENROLLED: No biometrics enrolled.")
+                result.error("NO_BIOMETRICS_ENROLLED", "No biometrics enrolled on this device.", null)
             }
             else -> {
+                Log.e("BiometricAuth", "Other biometric error.")
                 result.success(false) // Other errors
             }
         }

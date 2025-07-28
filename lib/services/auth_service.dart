@@ -8,7 +8,7 @@ class AuthService {
       final bool result = await _channel.invokeMethod('authenticate');
       return result;
     } on PlatformException catch (e) {
-      print("Failed to authenticate: '${e.message}');
+      print("Failed to authenticate: ${e.message}");
       return false;
     }
   }

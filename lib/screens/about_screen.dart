@@ -236,7 +236,7 @@ class _AboutScreenState extends State<AboutScreen> {
                       borderRadius: BorderRadius.circular(15),
                     ),
                     child: const Text(
-                      'Version 1.0.1',
+                      'Version 1.0.2',
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 14,
@@ -482,7 +482,7 @@ class _AboutScreenState extends State<AboutScreen> {
                     ],
                   ),
                   const SizedBox(height: 16),
-                  _buildInfoRow('Version', '1.0.1'),
+                  _buildInfoRow('Version', '1.0.2'),
                   _buildInfoRow('Build', '2025.07.28'),
                   _buildInfoRow('Platform', 'Flutter'),
                   _buildInfoRow('License', 'MIT License'),

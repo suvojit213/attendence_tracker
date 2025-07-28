@@ -928,38 +928,53 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
-            IconButton(
-              icon: Icon(
-                Icons.home_rounded,
-                color: _selectedIndex == 0
-                    ? Theme.of(context).primaryColor
-                    : Colors.grey,
-              ),
-              onPressed: () => _onItemTapped(0),
-              tooltip: 'Home',
+            _buildNavItem(
+              icon: Icons.home_rounded,
+              label: 'Home',
+              index: 0,
             ),
-            IconButton(
-              icon: Icon(
-                Icons.calendar_month_rounded,
-                color: _selectedIndex == 1
-                    ? Theme.of(context).primaryColor
-                    : Colors.grey,
-              ),
-              onPressed: () => _onItemTapped(1),
-              tooltip: 'Calendar',
+            _buildNavItem(
+              icon: Icons.calendar_month_rounded,
+              label: 'Calendar',
+              index: 1,
             ),
-            IconButton(
-              icon: Icon(
-                Icons.download_for_offline_rounded,
-                color: _selectedIndex == 2
-                    ? Theme.of(context).primaryColor
-                    : Colors.grey,
-              ),
-              onPressed: () => _onItemTapped(2),
-              tooltip: 'Download Reports',
+            _buildNavItem(
+              icon: Icons.download_for_offline_rounded,
+              label: 'Reports',
+              index: 2,
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildNavItem({
+    required IconData icon,
+    required String label,
+    required int index,
+  }) {
+    return GestureDetector(
+      onTap: () => _onItemTapped(index),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            icon,
+            color: _selectedIndex == index
+                ? Theme.of(context).primaryColor
+                : Colors.grey,
+          ),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 12,
+              color: _selectedIndex == index
+                  ? Theme.of(context).primaryColor
+                  : Colors.grey,
+            ),
+          ),
+        ],
       ),
     );
   }

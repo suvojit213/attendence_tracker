@@ -3,23 +3,17 @@ import 'package:attendance_tracker/services/theme_service.dart';
 import 'package:attendance_tracker/utils/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'screens/home_screen.dart';
-import 'screens/setup_screen.dart'; // Import the new setup screen
 
 final themeService = ThemeService();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  SharedPreferences prefs = await SharedPreferences.getInstance();
-  bool isSetupComplete = prefs.getBool('isSetupComplete') ?? false;
-
-  runApp(AttendanceTrackerApp(isSetupComplete: isSetupComplete));
+  runApp(const AttendanceTrackerApp());
 }
 
 class AttendanceTrackerApp extends StatelessWidget {
-  final bool isSetupComplete;
-  const AttendanceTrackerApp({super.key, required this.isSetupComplete});
+  const AttendanceTrackerApp({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -32,9 +26,8 @@ class AttendanceTrackerApp extends StatelessWidget {
           theme: AppThemes.lightTheme,
           darkTheme: AppThemes.darkTheme,
           themeMode: themeMode,
-          initialRoute: isSetupComplete ? '/home' : '/setup',
+          home: const HomeScreen(),
           routes: {
-            '/setup': (context) => const SetupScreen(),
             '/home': (context) => const HomeScreen(),
             '/about': (context) => const AboutScreen(),
           },

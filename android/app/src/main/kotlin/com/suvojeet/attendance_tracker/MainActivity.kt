@@ -18,6 +18,7 @@ import androidx.biometric.BiometricPrompt
 import androidx.biometric.BiometricManager
 import java.util.concurrent.Executor
 import java.util.concurrent.Executors
+import androidx.fragment.app.FragmentActivity
 
 class MainActivity : FlutterActivity() {
     private val REPORTS_CHANNEL = "com.suvojeet.attendance_tracker/reports"
@@ -78,7 +79,7 @@ class MainActivity : FlutterActivity() {
         when (biometricManager.canAuthenticate(BiometricManager.Authenticators.BIOMETRIC_STRONG or BiometricManager.Authenticators.DEVICE_CREDENTIAL)) {
             BiometricManager.BIOMETRIC_SUCCESS -> {
                 // App can authenticate using biometrics
-                biometricPrompt = BiometricPrompt(this, executor, object : BiometricPrompt.AuthenticationCallback() {
+                biometricPrompt = BiometricPrompt(this as FragmentActivity, executor, object : BiometricPrompt.AuthenticationCallback() {
                     override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
                         super.onAuthenticationError(errorCode, errString)
                         result.success(false) // Authentication failed

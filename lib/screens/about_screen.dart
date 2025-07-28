@@ -220,7 +220,7 @@ class _AboutScreenState extends State<AboutScreen> {
                   ),
                   const SizedBox(height: 16),
                   const Text(
-                    'Attendance Tracker Pro',
+                    'Attendance Tracker',
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 22,
@@ -294,7 +294,7 @@ class _AboutScreenState extends State<AboutScreen> {
                   ),
                   const SizedBox(height: 12),
                   const Text(
-                    'Attendance Tracker Pro is designed to simplify and modernize attendance management for individuals and organizations. Our mission is to provide a secure, user-friendly, and efficient solution thathelps users track their work hours accurately while maintaining data privacy.',
+                    'Attendance Tracker is designed to simplify and modernize attendance management for individuals and organizations. Our mission is to provide a secure, user-friendly, and efficient solution thathelps users track their work hours accurately while maintaining data privacy.',
                     style: TextStyle(
                       fontSize: 14,
                       height: 1.5,

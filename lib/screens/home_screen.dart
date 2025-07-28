@@ -549,7 +549,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Attendance Tracker Pro'),
+        title: const Text('Attendance Tracker'),
         elevation: 0,
         actions: [
           IconButton(

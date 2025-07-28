@@ -527,6 +527,14 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           });
         });
         break;
+      case 2:
+        Navigator.pushNamed(context, '/reports').then((_) {
+          // Reset index to home when returning
+          setState(() {
+            _selectedIndex = 0;
+          });
+        });
+        break;
     }
   }
 
@@ -939,6 +947,16 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               ),
               onPressed: () => _onItemTapped(1),
               tooltip: 'Calendar',
+            ),
+            IconButton(
+              icon: Icon(
+                Icons.download_for_offline_rounded,
+                color: _selectedIndex == 2
+                    ? Theme.of(context).primaryColor
+                    : Colors.grey,
+              ),
+              onPressed: () => _onItemTapped(2),
+              tooltip: 'Download Reports',
             ),
           ],
         ),

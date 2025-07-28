@@ -1,6 +1,4 @@
-import 'package:attendance_tracker/screens/about_screen.dart';
-import 'package:attendance_tracker/services/theme_service.dart';
-import 'package:attendance_tracker/utils/theme.dart';
+import 'package:attendance_tracker/screens/reports_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'screens/home_screen.dart';
@@ -30,6 +28,7 @@ class AttendanceTrackerApp extends StatelessWidget {
           routes: {
             '/home': (context) => const HomeScreen(),
             '/about': (context) => const AboutScreen(),
+            '/reports': (context) => const ReportsScreen(),
           },
         );
       },

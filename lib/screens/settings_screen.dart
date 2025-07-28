@@ -226,6 +226,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     ),
                     const SizedBox(height: 5),
                     const Text(
+                      'Should you encounter any issues while making a payment, please feel free to contact the developer directly. Your support, no matter the amount, is greatly appreciated and motivates continuous maintenance and improvement of this app.',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontStyle: FontStyle.italic,
+                      ),
+                    ),
+                    const SizedBox(height: 5),
+                    const Text(
                       'Your support motivates monthly updates and new features!',
                       style: TextStyle(
                         fontSize: 12,

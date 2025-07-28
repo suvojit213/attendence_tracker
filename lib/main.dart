@@ -22,7 +22,7 @@ class AttendanceTrackerApp extends StatelessWidget {
       valueListenable: themeService,
       builder: (context, themeMode, child) {
         return MaterialApp(
-          title: 'Attendance Tracker Pro',
+          title: 'Attendance Tracker',
           debugShowCheckedModeBanner: false,
           theme: AppThemes.lightTheme,
           darkTheme: AppThemes.darkTheme,

@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:attendance_tracker/models/attendance_record.dart';
+import 'package:attendance_tracker/models/attendance_status.dart';
 import 'package:attendance_tracker/services/attendance_storage_service.dart';
 import 'package:csv/csv.dart';
 import 'package:flutter/material.dart';

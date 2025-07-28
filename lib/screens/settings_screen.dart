@@ -2,6 +2,7 @@ import 'package:attendance_tracker/main.dart';
 import 'package:flutter/material.dart';
 import 'package:attendance_tracker/services/attendance_storage_service.dart';
 import 'package:attendance_tracker/utils/app_colors.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -36,6 +37,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
           backgroundColor: AppColors.success,
         ),
       );
+    }
+  }
+
+  Future<void> _launchUPI() async {
+    final uri = Uri.parse('upi://pay?pa=suvojeetsengupta2.wallet@phonepe&pn=Suvojeet%20Sengupta&cu=INR');
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri);
+    } else {
+      // Handle error: could not launch UPI app
+      debugPrint('Could not launch UPI app');
     }
   }
 
@@ -186,12 +197,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       ),
                     ),
                     const SizedBox(height: 10),
-                    SelectableText(
-                      'UPI ID: suvojeetsengupta2.wallet@phonepe',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Theme.of(context).primaryColor,
+                    GestureDetector(
+                      onTap: _launchUPI,
+                      child: SelectableText(
+                        'UPI ID: suvojeetsengupta2.wallet@phonepe',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Theme.of(context).primaryColor,
+                          decoration: TextDecoration.underline,
+                        ),
                       ),
                     ),
                     const SizedBox(height: 5),
